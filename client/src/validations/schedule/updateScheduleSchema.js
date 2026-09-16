@@ -26,7 +26,7 @@ const updateScheduleSchema = yup.object({
                     .required("Stop sequence is required"),
 
                 expectedArrivalTime: yup
-                    .date()
+                    .string()
                     .required("Expected arrival time is required")
                     .matches(
                         /^([01]\d|2[0-3]):([0-5]\d)$/,
@@ -38,13 +38,13 @@ const updateScheduleSchema = yup.object({
         .required("Stops are required"),
 
     arrivalTime: yup
-        .date()
+        .string()
         .required("Arrival time is required")
         .matches(/^([01]\d|2[0-3]):([0-5]\d)$/,
             "Please use 24-hour HH:mm format"),
 
     departureTime: yup
-        .date()
+        .string()
         .required("Departure time is required")
         .matches(
             /^([01]\d|2[0-3]):([0-5]\d)$/,
