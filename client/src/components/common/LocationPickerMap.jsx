@@ -6,6 +6,7 @@ import {
   Popup,
   useMap,
   useMapEvents,
+  ZoomControl,
 } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -204,8 +205,12 @@ const LocationPickerMap = ({ latitude, longitude, onLocationChange }) => {
           center={currentCenter}
           zoom={14}
           scrollWheelZoom={true}
+          zoomControl={false} // 1. Disable default top-left control
           className="h-full w-full"
         >
+          {/* 2. Add custom-positioned zoom control */}
+          <ZoomControl position="bottomright" />
+
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
