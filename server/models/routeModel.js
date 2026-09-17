@@ -7,15 +7,37 @@ const routeSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+
     source: {
-      type: String,
-      required: true,
-      trim: true,
+      name: {
+        type: String,
+        required: true,
+        trim: true,
+      },
+      latitude: {
+        type: Number,
+        required: true,
+      },
+      longitude: {
+        type: Number,
+        required: true,
+      },
     },
+
     destination: {
-      type: String,
-      required: true,
-      trim: true,
+      name: {
+        type: String,
+        required: true,
+        trim: true,
+      },
+      latitude: {
+        type: Number,
+        required: true,
+      },
+      longitude: {
+        type: Number,
+        required: true,
+      },
     },
   },
   {

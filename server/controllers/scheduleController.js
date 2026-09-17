@@ -154,6 +154,39 @@ let getSchedulesByRoute = async (req, res) => {
 
 };
 
+let getCandidateStopsByRoute = async (req, res) => {
+
+  try {
+
+    const { routeId } = req.params;
+
+    const candidateStops =
+      await scheduleService.getCandidateStopsByRoute(routeId);
+
+    return res.status(200).json({
+
+      success: true,
+
+      count: candidateStops.length,
+
+      data: candidateStops,
+
+    });
+
+  } catch (error) {
+
+    return res.status(error.status || 500).json({
+
+      success: false,
+
+      message: error.message,
+
+    });
+
+  }
+
+};
+
 let getSchedulesByStop = async (req, res) => {
 
   try {
@@ -196,4 +229,5 @@ module.exports = {
   getAssignedSchedulesByBus,
   getSchedulesByRoute,
   getSchedulesByStop,
+  getCandidateStopsByRoute,
 };

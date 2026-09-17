@@ -235,11 +235,11 @@ const RouteList = () => {
                                             </td>
 
                                             <td className="border border-gray-300 px-4 py-2">
-                                                {route.source}
+                                                {route.source?.name}
                                             </td>
 
                                             <td className="border border-gray-300 px-4 py-2">
-                                                {route.destination}
+                                                {route.destination?.name}
                                             </td>
 
                                             <td className="border border-gray-300 px-4 py-2">

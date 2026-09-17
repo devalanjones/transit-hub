@@ -136,10 +136,10 @@ const RouteDetails = () => {
             <strong>Route Name:</strong> {route.routeName}
           </p>
           <p>
-            <strong>Source:</strong> {route.source}
+            <strong>Source:</strong> {route.source?.name}
           </p>
           <p>
-            <strong>Destination:</strong> {route.destination}
+            <strong>Destination:</strong> {route.destination?.name}
           </p>
         </div>
       </div>

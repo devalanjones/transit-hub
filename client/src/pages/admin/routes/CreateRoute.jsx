@@ -29,6 +29,10 @@ const CreateRoute = () => {
 
     let source = watch("source");
     let destination = watch("destination");
+    let sourceLatitude = watch("sourceLatitude");
+    let sourceLongitude = watch("sourceLongitude");
+    let destinationLatitude = watch("destinationLatitude");
+    let destinationLongitude = watch("destinationLongitude");
 
     let routeName =
         source?.trim() && destination?.trim()
@@ -45,7 +49,7 @@ const CreateRoute = () => {
                 source: data.source.trim(),
                 destination: data.destination.trim(),
                 routeName: `${data.source.trim()} - ${data.destination.trim()}`
-            }
+            };
 
             let response = await createRoute(routeData);
 

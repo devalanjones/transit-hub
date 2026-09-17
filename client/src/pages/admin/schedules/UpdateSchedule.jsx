@@ -3,13 +3,9 @@ import { Controller, useForm } from "react-hook-form";
 import { useNavigate, useParams } from "react-router-dom";
 import updateScheduleSchema from "../../../validations/schedule/updateScheduleSchema";
 import { useEffect, useState } from "react";
-import {
-  getScheduleById,
-  updateSchedule,
-} from "../../../services/scheduleService";
+import { getScheduleById, updateSchedule, getCandidateStopsByRoute } from "../../../services/scheduleService";
 import { getAllBuses } from "../../../services/busService";
 import { getAllRoutes } from "../../../services/routeService";
-import { getAllStops } from "../../../services/stopService";
 import Loading from "../../../components/common/Loading";
 import ErrorMessage from "../../../components/common/ErrorMessage";
 import Button from "../../../components/common/Button";
@@ -17,6 +13,7 @@ import Select from "../../../components/common/Select";
 import Input from "../../../components/common/Input";
 import FormattedTime from "../../../components/common/FormattedTime";
 import { toast } from "sonner";
+
 
 // Converts incoming Date / ISO / string timestamps to "HH:mm" for <input type="time"/>
 const toInputTimeString = (timeVal) => {
@@ -101,26 +98,50 @@ const UpdateSchedule = () => {
           scheduleResponse,
           busResponse,
           routeResponse,
-          stopResponse,
         ] = await Promise.all([
           getScheduleById(id),
           getAllBuses(),
           getAllRoutes(),
-          getAllStops(),
         ]);
 
         let schedule = scheduleResponse.data.data;
 
         setBuses(busResponse.data.data);
         setRoutes(routeResponse.data.data);
-        setStops(stopResponse.data.data);
 
         setSelectedStops(
           schedule.stops.map((scheduleStop) => scheduleStop.stopId)
         );
 
         setValue("busId", schedule.busId?._id || schedule.busId);
-        setValue("routeId", schedule.routeId?._id || schedule.routeId);
+        let routeId = schedule.routeId?._id || schedule.routeId;
+
+        setValue("routeId", routeId);
+
+        if (routeId) {
+          let candidateResponse =
+            await getCandidateStopsByRoute(routeId);
+
+          let candidateStops = candidateResponse.data.data;
+
+          let existingStops = schedule.stops.map(
+            (scheduleStop) => scheduleStop.stopId
+          );
+
+          let allStops = [
+            ...candidateStops,
+            ...existingStops.filter(
+              (existingStop) =>
+                !candidateStops.some(
+                  (candidateStop) =>
+                    candidateStop._id === existingStop._id
+                )
+            )
+          ];
+
+          setStops(allStops);
+        }
+
         setValue("arrivalTime", toInputTimeString(schedule.arrivalTime));
         setValue("departureTime", toInputTimeString(schedule.departureTime));
         setValue("days", schedule.days || []);
@@ -156,6 +177,39 @@ const UpdateSchedule = () => {
   if (error) {
     return <ErrorMessage message={error} />;
   }
+
+  let handleRouteChange = async (event) => {
+
+    let routeId = event.target.value;
+
+    setSelectedStops([]);
+
+    setValue("stops", [], {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+
+    setStops([]);
+
+    if (!routeId) {
+      return;
+    }
+
+    try {
+
+      let response = await getCandidateStopsByRoute(routeId);
+
+      setStops(response.data.data);
+
+    } catch (error) {
+
+      toast.error(
+        error.response?.data?.message ||
+        "Failed to load candidate stops"
+      );
+
+    }
+  };
 
   let handleStopChange = (stop) => {
     let isSelected = selectedStops.some(
@@ -338,7 +392,9 @@ const UpdateSchedule = () => {
             </label>
             <Select
               id="routeId"
-              {...register("routeId")}
+              {...register("routeId", {
+                onChange: handleRouteChange,
+              })}
               options={routeOptions}
             />
             {errors.routeId && (
@@ -349,27 +405,48 @@ const UpdateSchedule = () => {
           {/* Stops */}
           <div>
             <h2 className="mb-4 text-lg font-semibold text-gray-800">Stops</h2>
-
             <div>
               <h3 className="mb-3 font-medium text-gray-700">
                 Available Stops
               </h3>
 
-              <div className="space-y-2">
-                {stops.map((stop) => (
-                  <label key={stop._id} className="flex items-center gap-3">
-                    <Input
-                      type="checkbox"
-                      checked={selectedStops.some(
-                        (selectedStop) => selectedStop._id === stop._id
-                      )}
-                      onChange={() => handleStopChange(stop)}
-                      className="!h-4 !w-4"
-                    />
-                    <span className="text-gray-700">{stop.stopName}</span>
-                  </label>
-                ))}
-              </div>
+              <Select
+                id="stopId"
+                options={[
+                  { value: "", label: "Select Stop" },
+
+                  ...stops
+                    .filter(
+                      (stop) =>
+                        !selectedStops.some(
+                          (selectedStop) =>
+                            selectedStop._id === stop._id
+                        )
+                    )
+                    .map((stop) => ({
+                      value: stop._id,
+                      label: stop.stopName,
+                    })),
+                ]}
+                onChange={(event) => {
+
+                  let stopId = event.target.value;
+
+                  if (!stopId) {
+                    return;
+                  }
+
+                  let stop = stops.find(
+                    (stop) => stop._id === stopId
+                  );
+
+                  if (!stop) {
+                    return;
+                  }
+
+                  handleStopChange(stop);
+                }}
+              />
             </div>
 
             <div className="mt-6">
@@ -401,6 +478,13 @@ const UpdateSchedule = () => {
                         <span className="flex-1 text-gray-700">
                           {stop.stopName}
                         </span>
+                        <Button
+                          type="button"
+                          onClick={() => handleStopChange(stop)}
+                          className="bg-red-500 hover:bg-red-600 px-3 py-1 text-sm"
+                        >
+                          Remove
+                        </Button>
 
                         <div className="w-44 text-right">
                           <Input
