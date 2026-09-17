@@ -1,4 +1,3 @@
-
 import * as yup from "yup";
 
 const createRouteSchema = yup.object({
@@ -20,7 +19,7 @@ const createRouteSchema = yup.object({
                 return value?.trim().toLowerCase() !==
                     this.parent.source?.trim().toLowerCase();
             }
-        )
+        ),
 
 });
 

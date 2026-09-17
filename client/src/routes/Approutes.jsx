@@ -19,6 +19,7 @@ import ScheduleList from "../pages/admin/schedules/ScheduleList";
 import ScheduleDetails from "../pages/admin/schedules/ScheduleDetails";
 import CreateSchedule from "../pages/admin/schedules/CreateSchedule";
 import UpdateSchedule from "../pages/admin/schedules/UpdateSchedule";
+import UserList from "../pages/admin/user/UserList";
 
 
 const AppRoutes = () => {
@@ -32,6 +33,8 @@ const AppRoutes = () => {
             <Route path={"/admin"} element={<AdminLayout />}>
 
                 <Route path={"dashboard"} element={<Dashboard />} />
+
+                <Route path={"users"} element={<UserList />} />
 
                 <Route path={"buses"} element={<BusList />} />
 

@@ -5,13 +5,12 @@ import createScheduleSchema from "../../../validations/schedule/createScheduleSc
 import { useEffect, useState } from "react";
 import { getAllBuses } from "../../../services/busService";
 import { getAllRoutes } from "../../../services/routeService";
-import { getAllStops } from "../../../services/stopService";
 import Select from "../../../components/common/Select";
 import ErrorMessage from "../../../components/common/ErrorMessage";
 import Button from "../../../components/common/Button";
 import { toast } from "sonner";
 import Input from "../../../components/common/Input";
-import { createSchedule } from "../../../services/scheduleService";
+import { createSchedule, getCandidateStopsByRoute } from "../../../services/scheduleService";
 import FormattedTime from "../../../components/common/FormattedTime";
 
 const CreateSchedule = () => {
@@ -71,12 +70,10 @@ const CreateSchedule = () => {
         let [busResponse, routeResponse, stopResponse] = await Promise.all([
           getAllBuses(),
           getAllRoutes(),
-          getAllStops(),
         ]);
 
         setBuses(busResponse.data.data);
         setRoutes(routeResponse.data.data);
-        setStops(stopResponse.data.data);
       } catch (error) {
         toast.error(
           error.response?.data?.message || "Failed to load buses and routes",
@@ -87,16 +84,48 @@ const CreateSchedule = () => {
     fetchData();
   }, []);
 
+  let handleRouteChange = async (event) => {
+
+    let routeId = event.target.value;
+
+    setSelectedStops([]);
+    setValue("stops", [], {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+
+    setStops([]);
+
+    if (!routeId) {
+      return;
+    }
+
+    try {
+
+      let response = await getCandidateStopsByRoute(routeId);
+
+      setStops(response.data.data);
+
+    } catch (error) {
+
+      toast.error(
+        error.response?.data?.message ||
+        "Failed to load candidate stops"
+      );
+
+    }
+  };
   let handleStopChange = (stop) => {
     let isSelected = selectedStops.some(
-      (selectedStop) => selectedStop._id === stop._id,
+      (selectedStop) => selectedStop._id === stop._id
     );
 
+    let currentStopValues = watch("stops") || [];
     let newSelectedStops;
 
     if (isSelected) {
       newSelectedStops = selectedStops.filter(
-        (selectedStop) => selectedStop._id !== stop._id,
+        (selectedStop) => selectedStop._id !== stop._id
       );
     } else {
       newSelectedStops = [...selectedStops, stop];
@@ -104,23 +133,26 @@ const CreateSchedule = () => {
 
     setSelectedStops(newSelectedStops);
 
-    let currentStopValues = watch("stops") || [];
+    let newStopValues = newSelectedStops.map(
+      (selectedStop, index) => {
 
-    let newStopValues = newSelectedStops.map((selectedStop, index) => {
-      let existingStop = currentStopValues.find(
-        (stopValue) => stopValue.stopId === selectedStop._id,
-      );
+        let existingStop = currentStopValues.find(
+          (stopValue) =>
+            stopValue.stopId === selectedStop._id
+        );
 
-      return {
-        stopId: selectedStop._id,
-        stopSequence: index + 1,
-        expectedArrivalTime: existingStop?.expectedArrivalTime || "",
-      };
-    });
+        return {
+          stopId: selectedStop._id,
+          stopSequence: index + 1,
+          expectedArrivalTime:
+            existingStop?.expectedArrivalTime || "",
+        };
+      }
+    );
 
     setValue("stops", newStopValues, {
-      shouldValidate: true,
       shouldDirty: true,
+      shouldValidate: true,
     });
 
     trigger("stops");
@@ -257,6 +289,24 @@ const CreateSchedule = () => {
     })),
   ];
 
+  let availableStopOptions = [
+    {
+      value: "",
+      label: "Select Stop",
+    },
+    ...stops
+      .filter(
+        (stop) =>
+          !selectedStops.some(
+            (selectedStop) => selectedStop._id === stop._id,
+          ),
+      )
+      .map((stop) => ({
+        value: stop._id,
+        label: stop.stopName,
+      })),
+  ];
+
   return (
     <div className="p-6">
       {/* Back Button */}
@@ -294,7 +344,9 @@ const CreateSchedule = () => {
             </label>
             <Select
               id="routeId"
-              {...register("routeId")}
+              {...register("routeId", {
+                onChange: handleRouteChange,
+              })}
               options={routeOptions}
             />
             {errors.routeId && (
@@ -311,21 +363,21 @@ const CreateSchedule = () => {
                 Available Stops
               </h3>
 
-              <div className="space-y-2">
-                {stops.map((stop) => (
-                  <label key={stop._id} className="flex items-center gap-3">
-                    <Input
-                      type="checkbox"
-                      checked={selectedStops.some(
-                        (selectedStop) => selectedStop._id === stop._id,
-                      )}
-                      onChange={() => handleStopChange(stop)}
-                      className="!h-4 !w-4"
-                    />
-                    <span className="text-gray-700">{stop.stopName}</span>
-                  </label>
-                ))}
-              </div>
+              <Select
+                id="stopId"
+                value=""
+                onChange={(event) => {
+                  let stop = stops.find(
+                    (stop) => stop._id === event.target.value
+                  );
+
+                  if (stop) {
+                    handleStopChange(stop);
+                  }
+                }}
+                options={availableStopOptions}
+              />
+
             </div>
 
             <div className="mt-6">
@@ -359,6 +411,14 @@ const CreateSchedule = () => {
                         <span className="flex-1 text-gray-700">
                           {stop.stopName}
                         </span>
+
+                        <Button
+                          type="button"
+                          onClick={() => handleStopChange(stop)}
+                          className="bg-red-500 hover:bg-red-600 px-3 py-1 text-sm"
+                        >
+                          Remove
+                        </Button>
 
                         <div className="w-40">
                           <Input
