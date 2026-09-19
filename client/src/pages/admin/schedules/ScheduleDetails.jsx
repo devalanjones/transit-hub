@@ -11,6 +11,7 @@ import ErrorMessage from "../../../components/common/ErrorMessage";
 import EmptyState from "../../../components/common/EmptyState";
 import Button from "../../../components/common/Button";
 import FormattedTime from "../../../components/common/FormattedTime";
+import ScheduleMap from "../../../components/shedule/ScheduleMap"; 
 
 const ScheduleDetails = () => {
   let { id } = useParams();
@@ -24,11 +25,8 @@ const ScheduleDetails = () => {
     let fetchSchedule = async () => {
       try {
         setLoading(true);
-
         setError("");
-
         let response = await getScheduleById(id);
-
         setSchedule(response.data.data);
       } catch (error) {
         setError(
@@ -70,9 +68,7 @@ const ScheduleDetails = () => {
 
     try {
       let response = await deleteSchedule(id);
-
       toast.success(response.data.message);
-
       navigate("/admin/schedules");
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to delete schedule");
@@ -80,9 +76,7 @@ const ScheduleDetails = () => {
   };
 
   let bus = schedule.busId;
-
   let route = schedule.routeId;
-
   let sortedStops = [...(schedule.stops || [])].sort(
     (a, b) => a.stopSequence - b.stopSequence,
   );
@@ -100,12 +94,10 @@ const ScheduleDetails = () => {
           <h1 className="text-2xl font-bold text-gray-800">Schedule Details</h1>
         </div>
 
-        {/* Edit & Delete Button */}
         <div className="flex gap-2">
           <Button onClick={() => navigate(`/admin/schedules/${id}/edit`)}>
             Edit
           </Button>
-
           <Button
             onClick={handleDelete}
             className="bg-red-600 text-white hover:bg-red-700"
@@ -120,7 +112,6 @@ const ScheduleDetails = () => {
         <h2 className="mb-5 text-lg font-semibold text-gray-800">
           Bus Information
         </h2>
-
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
           <div>
             <p className="text-sm text-gray-500">Bus Number</p>
@@ -128,21 +119,18 @@ const ScheduleDetails = () => {
               {bus?.busRegNumber || "-"}
             </p>
           </div>
-
           <div>
             <p className="text-sm text-gray-500">Bus Name</p>
             <p className="mt-1 font-medium text-gray-800">
               {bus?.busName || "-"}
             </p>
           </div>
-
           <div>
             <p className="text-sm text-gray-500">Bus Type</p>
             <p className="mt-1 font-medium text-gray-800">
               {bus?.busType?.busType || "-"}
             </p>
           </div>
-
           <div>
             <p className="text-sm text-gray-500">Bus Status</p>
             <p className="mt-1 font-medium text-gray-800">
@@ -152,10 +140,9 @@ const ScheduleDetails = () => {
         </div>
       </div>
 
-      {/* Route */}
+      {/* Route Information */}
       <div className="mb-6 rounded-lg border border-gray-200 bg-white p-6">
         <h2 className="mb-5 text-lg font-semibold text-gray-800">Route</h2>
-
         <div>
           <p className="text-sm text-gray-500">Route Name</p>
           <p className="mt-1 font-medium text-gray-800">
@@ -164,7 +151,13 @@ const ScheduleDetails = () => {
         </div>
       </div>
 
-      {/* Stops */}
+      {/* Interactive Route Map */}
+      <div className="mb-6 rounded-lg border border-gray-200 bg-white p-6">
+        <h2 className="mb-4 text-lg font-semibold text-gray-800">Route Map</h2>
+        <ScheduleMap stops={sortedStops} />
+      </div>
+
+      {/* Stops Table */}
       <div className="mb-6 rounded-lg border border-gray-200 bg-white p-6">
         <h2 className="mb-5 text-lg font-semibold text-gray-800">Stops</h2>
 
@@ -184,7 +177,6 @@ const ScheduleDetails = () => {
                   </th>
                 </tr>
               </thead>
-
               <tbody>
                 {sortedStops.map((stop) => (
                   <tr
@@ -194,11 +186,9 @@ const ScheduleDetails = () => {
                     <td className="px-4 py-3 text-sm text-gray-700">
                       {stop.stopSequence}
                     </td>
-
                     <td className="px-4 py-3 text-sm text-gray-700">
                       {stop.stopId?.stopName || "-"}
                     </td>
-
                     <td className="px-4 py-3 text-sm text-gray-700">
                       <FormattedTime
                         value={stop.expectedArrivalTime}
@@ -218,7 +208,6 @@ const ScheduleDetails = () => {
 
       {/* Schedule Information */}
       <div className="mb-6 grid grid-cols-1 gap-x-12 gap-y-6 px-2 md:grid-cols-2">
-        {/* Left Column */}
         <div className="space-y-6">
           <div>
             <p className="text-sm text-gray-500">Departure Time</p>
@@ -239,7 +228,6 @@ const ScheduleDetails = () => {
           </div>
         </div>
 
-        {/* Right Column */}
         <div className="space-y-6">
           <div>
             <p className="text-sm text-gray-500">Arrival Time</p>
