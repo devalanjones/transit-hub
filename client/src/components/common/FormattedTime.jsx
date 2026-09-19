@@ -34,7 +34,7 @@ export const formatTimeValue = (
 const FormattedTime = ({
   value,
   hour12 = true,
-  useUTC = true,
+  useUTC = false,
   fallback = "N/A",
   className = "",
 }) => {
