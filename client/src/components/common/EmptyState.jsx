@@ -1,44 +1,42 @@
-import Button from "./Button"
-
-
+import Button from "./Button";
+import { Bus } from "lucide-react";
 
 const EmptyState = ({
-
-    title,
-    message,
-    buttonText,
-    onClick,
-    icon = "🚌"
+  title,
+  message,
+  buttonText,
+  onClick,
+  icon: Icon = Bus,
 }) => {
+  return (
+    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300/80 bg-white/70 p-8 text-center backdrop-blur-sm transition-colors duration-200 dark:border-slate-800 dark:bg-slate-900/60 sm:p-12">
+      {/* Icon Badge Container */}
+      <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-orange-50 text-orange-600 shadow-sm ring-8 ring-orange-50/50 dark:bg-orange-950/40 dark:text-orange-400 dark:ring-orange-950/20">
+        {typeof Icon === "string" ? (
+          <span className="text-3xl select-none">{Icon}</span>
+        ) : (
+          <Icon size={32} strokeWidth={1.75} />
+        )}
+      </div>
 
-    return (
+      {/* Title */}
+      <h2 className="mb-2 text-xl font-bold tracking-tight text-slate-800 dark:text-slate-100 sm:text-2xl">
+        {title}
+      </h2>
 
-        <div className="flex flex-col items-center justify-center bg-white rounded-xl shadow-md p-10">
+      {/* Subtext message */}
+      <p className="mb-6 max-w-sm text-sm text-slate-500 dark:text-slate-400 sm:text-base">
+        {message}
+      </p>
 
-            <div className="text-6xl mb-4">
-                {icon}
-            </div>
+      {/* Action Button */}
+      {buttonText && onClick && (
+        <Button onClick={onClick} variant="primary">
+          {buttonText}
+        </Button>
+      )}
+    </div>
+  );
+};
 
-            <h1 className="text-2xl font-bold text-gray-800 mb-2">
-                {title}
-            </h1>
-
-            <p className="text-gray-500 text-center mb-6">
-                {message}
-            </p>
-
-            {buttonText && onClick && (
-
-                <Button onClick={onClick}>
-
-                    {buttonText}
-
-                </Button>
-
-            )}
-
-        </div>
-    )
-}
-
-export default EmptyState
+export default EmptyState;

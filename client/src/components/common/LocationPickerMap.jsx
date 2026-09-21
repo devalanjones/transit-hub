@@ -158,9 +158,10 @@ const LocationPickerMap = ({ latitude, longitude, onLocationChange }) => {
   );
 
   return (
-    <div className="space-y-2">
+    /* 1. Added 'relative isolate z-0' to isolate this whole component's stacking context */
+    <div className="relative isolate z-0 space-y-2">
       {/* Search Input with Auto-complete Dropdown */}
-      <div ref={containerRef} className="relative">
+      <div ref={containerRef} className="relative z-20">
         <div className="relative">
           <input
             type="text"
@@ -180,9 +181,9 @@ const LocationPickerMap = ({ latitude, longitude, onLocationChange }) => {
           )}
         </div>
 
-        {/* Suggestions Menu */}
+        {/* Suggestions Menu: reduced from z-[1000] to z-30 (stays above the map below, but capped inside isolate) */}
         {showDropdown && suggestions.length > 0 && (
-          <ul className="absolute z-[1000] mt-1 max-h-56 w-full overflow-y-auto rounded-md border border-gray-200 bg-white py-1 shadow-lg">
+          <ul className="absolute z-30 mt-1 max-h-56 w-full overflow-y-auto rounded-md border border-gray-200 bg-white py-1 shadow-lg">
             {suggestions.map((item) => (
               <li
                 key={item.place_id}
@@ -200,15 +201,15 @@ const LocationPickerMap = ({ latitude, longitude, onLocationChange }) => {
       </div>
 
       {/* Interactive Map */}
-      <div className="h-[380px] w-full overflow-hidden rounded-lg border border-gray-300">
+      <div className="relative z-10 h-[380px] w-full overflow-hidden rounded-lg border border-gray-300">
         <MapContainer
           center={currentCenter}
           zoom={14}
           scrollWheelZoom={true}
-          zoomControl={false} // 1. Disable default top-left control
-          className="h-full w-full"
+          zoomControl={false}
+          /* 2. Added 'relative z-0' directly on MapContainer */
+          className="relative z-0 h-full w-full"
         >
-          {/* 2. Add custom-positioned zoom control */}
           <ZoomControl position="bottomright" />
 
           <TileLayer

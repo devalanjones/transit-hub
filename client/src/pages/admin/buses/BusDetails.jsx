@@ -1,47 +1,55 @@
-import Button from "../../../components/common/Button";
-import Loading from "../../../components/common/Loading";
-import ErrorMessage from "../../../components/common/ErrorMessage";
-import { getBusById, deleteBus } from "../../../services/busService";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Swal from "sweetalert2";
 import { toast } from "sonner";
+import {
+  ArrowLeft,
+  Edit3,
+  Trash2,
+  CalendarDays,
+  Bus as BusIcon,
+} from "lucide-react";
+
+import Button from "../../../components/common/Button";
+import Loading from "../../../components/common/Loading";
+import ErrorMessage from "../../../components/common/ErrorMessage";
 import EmptyState from "../../../components/common/EmptyState";
-import { getAssignedSchedulesByBus } from "../../../services/scheduleService";
 import FormattedTime from "../../../components/common/FormattedTime";
+import { getBusById, deleteBus } from "../../../services/busService";
+import { getAssignedSchedulesByBus } from "../../../services/scheduleService";
 
 const BusDetails = () => {
-  let navigate = useNavigate();
-  let { id } = useParams();
+  const navigate = useNavigate();
+  const { id } = useParams();
 
-  let [bus, setBus] = useState(null);
-  let [loading, setLoading] = useState(true);
-  let [error, setError] = useState("");
-  let [assignedSchedules, setAssignedSchedules] = useState([]);
-  let [scheduleLoading, setScheduleLoading] = useState(false);
-  let [scheduleError, setScheduleError] = useState("");
+  const [bus, setBus] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [assignedSchedules, setAssignedSchedules] = useState([]);
+  const [scheduleLoading, setScheduleLoading] = useState(false);
+  const [scheduleError, setScheduleError] = useState("");
 
-  let fetchAssignedSchedules = async () => {
+  const fetchAssignedSchedules = async () => {
     try {
       setScheduleLoading(true);
       setScheduleError("");
-      let response = await getAssignedSchedulesByBus(id);
-      let schedules = response.data.data || [];
+      const response = await getAssignedSchedulesByBus(id);
+      const schedules = response.data.data || [];
       setAssignedSchedules(schedules.slice(0, 3));
-    } catch (error) {
+    } catch (err) {
       setScheduleError(
-        error.response?.data?.message || "Failed to get assigned schedule",
+        err.response?.data?.message || "Failed to get assigned schedule",
       );
     } finally {
       setScheduleLoading(false);
     }
   };
 
-  let fetchBus = async () => {
+  const fetchBus = async () => {
     try {
       setLoading(true);
-      let response = await getBusById(id);
-      let busData = response.data.data;
+      const response = await getBusById(id);
+      const busData = response.data.data;
       setBus(busData);
       setError("");
 
@@ -50,8 +58,8 @@ const BusDetails = () => {
       } else {
         setAssignedSchedules([]);
       }
-    } catch (error) {
-      setError(error.response?.data?.message || "Failed to get bus");
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to get bus");
     } finally {
       setLoading(false);
     }
@@ -66,149 +74,231 @@ const BusDetails = () => {
   }
 
   if (error) {
-    return <ErrorMessage message={error} />;
+    return (
+      <div className="p-6">
+        <ErrorMessage variant="banner" message={error} />
+      </div>
+    );
   }
 
-  let handleDelete = async () => {
-    let result = await Swal.fire({
+  const handleDelete = async () => {
+    const result = await Swal.fire({
       title: "Are you sure?",
-      text: "You won't be able to revert this!",
+      text: "You will not be able to revert this!",
       icon: "warning",
       showCancelButton: true,
       confirmButtonText: "Yes, delete it!",
       cancelButtonText: "Cancel",
+      confirmButtonColor: "#ea580c", // Orange-600
     });
 
-    if (!result.isConfirmed) {
-      return;
-    }
+    if (!result.isConfirmed) return;
 
     try {
-      let response = await deleteBus(id);
-      toast.success(response.data.message);
+      const response = await deleteBus(id);
+      toast.success(response.data?.message || "Bus deleted successfully");
       navigate("/admin/buses");
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to Delete Bus");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to Delete Bus");
     }
   };
 
   return (
-    <div className="p-6">
-      {/* Back Button */}
-      <div className="mb-6">
-        <Button onClick={() => navigate("/admin/buses")}>← Back</Button>
-      </div>
+    <div className="space-y-6">
+      {/* Top Header & Action Row */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <Button
+          variant="secondary"
+          onClick={() => navigate("/admin/buses")}
+          className="w-fit"
+        >
+          <ArrowLeft size={16} />
+          <span>Back to Buses</span>
+        </Button>
 
-      {/* Heading */}
-      <div className="mb-6 flex items-center justify-between">
-        <div className="flex-1 text-center">
-          <h1 className="text-2xl font-bold text-gray-800">Bus Details</h1>
-        </div>
-
-        {/* Edit & Delete button */}
-        <div className="flex gap-2">
-          <Button onClick={() => navigate(`/admin/buses/${id}/edit`)}>
-            Edit
-          </Button>
+        <div className="flex items-center gap-2">
           <Button
-            onClick={handleDelete}
-            className="bg-red-600 text-white hover:bg-red-700"
+            variant="secondary"
+            onClick={() => navigate(`/admin/buses/${id}/edit`)}
           >
-            Delete
+            <Edit3 size={16} />
+            <span>Edit</span>
+          </Button>
+
+          <Button variant="danger" onClick={handleDelete}>
+            <Trash2 size={16} />
+            <span>Delete</span>
           </Button>
         </div>
       </div>
 
-      {/* Bus Information */}
-      <div>
-        <h2 className="mb-4 text-xl font-semibold text-gray-800">
+      {/* Page Title & Main Identifier */}
+      <div className="flex items-center gap-3">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-500/10 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400">
+          <BusIcon size={24} />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-100">
+            {bus.busName}
+          </h1>
+          <p className="text-xs font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            {bus.busRegNumber}
+          </p>
+        </div>
+      </div>
+
+      {/* Bus Information Card */}
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs transition-colors duration-200 dark:border-slate-800 dark:bg-slate-900">
+        <h2 className="mb-4 text-base font-semibold text-slate-800 dark:text-slate-100">
           Bus Information
         </h2>
 
-        <div className="space-y-3 rounded-lg border border-gray-300 p-4">
-          <p>
-            <strong>Bus Number:</strong> {bus.busRegNumber}
-          </p>
-          <p>
-            <strong>Bus Name:</strong> {bus.busName}
-          </p>
-          <p>
-            <strong>Bus Type:</strong> {bus?.busType?.busType || "-"}
-          </p>
-          <p>
-            <strong>Bus Status:</strong> {bus.status}
-          </p>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {/* Reg Number */}
+          <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4 dark:border-slate-800/60 dark:bg-slate-950/40">
+            <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+              Registration Number
+            </span>
+            <p className="mt-1 font-semibold text-slate-800 dark:text-slate-200">
+              {bus.busRegNumber}
+            </p>
+          </div>
+
+          {/* Name */}
+          <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4 dark:border-slate-800/60 dark:bg-slate-950/40">
+            <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+              Bus Name
+            </span>
+            <p className="mt-1 font-semibold text-slate-800 dark:text-slate-200">
+              {bus.busName}
+            </p>
+          </div>
+
+          {/* Type */}
+          <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4 dark:border-slate-800/60 dark:bg-slate-950/40">
+            <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+              Bus Type
+            </span>
+            <p className="mt-1 font-semibold text-slate-800 dark:text-slate-200">
+              {bus?.busType?.busType || "-"}
+            </p>
+          </div>
+
+          {/* Status Badge */}
+          <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4 dark:border-slate-800/60 dark:bg-slate-950/40">
+            <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+              Operational Status
+            </span>
+            <div className="mt-1.5 flex items-center gap-2">
+              <span
+                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                  bus.status === "active"
+                    ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"
+                    : "bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400"
+                }`}
+              >
+                <span
+                  className={`h-1.5 w-1.5 rounded-full ${
+                    bus.status === "active" ? "bg-emerald-500" : "bg-rose-500"
+                  }`}
+                />
+                {bus.status
+                  ? bus.status.charAt(0).toUpperCase() + bus.status.slice(1)
+                  : "-"}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Assigned Schedules */}
-      <div className="mt-8">
-        <h2 className="mb-4 text-xl font-semibold text-gray-800">
-          Assigned Schedules
-        </h2>
+      {/* Assigned Schedules Section */}
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs transition-colors duration-200 dark:border-slate-800 dark:bg-slate-900">
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">
+              Assigned Schedules
+            </h2>
+            <p className="text-xs text-slate-400 dark:text-slate-500">
+              Showing active route assignments
+            </p>
+          </div>
 
-        {bus.status !== "active" && (
+          {assignedSchedules.length > 0 && (
+            <span className="rounded-lg bg-orange-50 px-2.5 py-1 text-xs font-medium text-orange-600 dark:bg-orange-950/40 dark:text-orange-400">
+              {assignedSchedules.length} Assigned
+            </span>
+          )}
+        </div>
+
+        {bus.status !== "active" ? (
           <EmptyState
-            message="This bus is inactive. No assigned schedules are available."
-            icon="🗓️"
+            title="Bus Inactive"
+            message="This bus is currently inactive. No scheduled routes are operating."
+            icon={CalendarDays}
           />
-        )}
-
-        {bus.status === "active" && (
+        ) : (
           <>
             {scheduleLoading && (
-              <Loading message="Loading Assigned Schedule..." />
+              <Loading message="Loading Assigned Schedules..." />
             )}
 
             {!scheduleLoading && scheduleError && (
-              <ErrorMessage message={scheduleError} />
+              <ErrorMessage variant="banner" message={scheduleError} />
             )}
 
             {!scheduleLoading &&
               !scheduleError &&
               assignedSchedules.length === 0 && (
                 <EmptyState
-                  message="No assigned schedules for this bus"
-                  icon="🗓️"
+                  title="No Schedules Found"
+                  message="There are no route schedules currently assigned to this bus."
+                  icon={CalendarDays}
                 />
               )}
 
             {!scheduleLoading &&
               !scheduleError &&
               assignedSchedules.length > 0 && (
-                <div className="overflow-hidden rounded-lg border border-gray-300">
-                  <div className="grid grid-cols-3 border-b border-gray-300 bg-gray-100">
-                    <div className="p-4 font-semibold text-gray-800">Route</div>
-                    <div className="p-4 font-semibold text-gray-800">
-                      Departure
-                    </div>
-                    <div className="p-4 font-semibold text-gray-800">
-                      Arrival
-                    </div>
-                  </div>
-
-                  {assignedSchedules.map((schedule) => (
-                    <div
-                      key={schedule._id}
-                      className="grid grid-cols-3 border-b border-gray-200 last:border-b-0"
-                    >
-                      <div className="p-4">
-                        {schedule?.routeId?.routeName || "-"}
-                      </div>
-                      <div className="p-4">
-                        <FormattedTime
-                          value={schedule.departureTime}
-                          fallback="-"
-                        />
-                      </div>
-                      <div className="p-4">
-                        <FormattedTime
-                          value={schedule.arrivalTime}
-                          fallback="-"
-                        />
-                      </div>
-                    </div>
-                  ))}
+                <div className="overflow-hidden rounded-xl border border-slate-200/80 dark:border-slate-800">
+                  <table className="w-full text-left text-sm text-slate-600 dark:text-slate-300">
+                    <thead className="border-b border-slate-200/80 bg-slate-50/75 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-400">
+                      <tr>
+                        <th scope="col" className="px-5 py-3.5">
+                          Route
+                        </th>
+                        <th scope="col" className="px-5 py-3.5">
+                          Departure
+                        </th>
+                        <th scope="col" className="px-5 py-3.5">
+                          Arrival
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200/80 dark:divide-slate-800">
+                      {assignedSchedules.map((schedule) => (
+                        <tr
+                          key={schedule._id}
+                          className="transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/40"
+                        >
+                          <td className="px-5 py-4 font-medium text-slate-800 dark:text-slate-200">
+                            {schedule?.routeId?.routeName || "-"}
+                          </td>
+                          <td className="px-5 py-4 text-slate-600 dark:text-slate-300">
+                            <FormattedTime
+                              value={schedule.departureTime}
+                              fallback="-"
+                            />
+                          </td>
+                          <td className="px-5 py-4 text-slate-600 dark:text-slate-300">
+                            <FormattedTime
+                              value={schedule.arrivalTime}
+                              fallback="-"
+                            />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
           </>
