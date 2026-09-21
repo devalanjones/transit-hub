@@ -70,10 +70,22 @@ const scheduleSchema = new mongoose.Schema(
       enum: ["ON_TIME", "DELAYED", "CANCELLED", "COMPLETED"],
       default: "ON_TIME",
     },
+    routeGeometry: {
+      type: {
+        type: String,
+        enum: ["LineString"],
+        default: "LineString",
+      },
+      coordinates: {
+        type: [[Number]],
+        default: [],
+      },
+    },
   },
   {
     timestamps: true,
   },
+
 );
 
 scheduleSchema.index({ routeId: 1, days: 1 });
