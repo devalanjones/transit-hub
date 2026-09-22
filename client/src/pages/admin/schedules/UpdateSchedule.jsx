@@ -10,6 +10,7 @@ import {
   getScheduleById,
   updateSchedule,
   getCandidateStopsByRoute,
+  getRouteGeometryByStops,
 } from "../../../services/scheduleService";
 import { getAllBuses } from "../../../services/busService";
 import { getAllRoutes } from "../../../services/routeService";
@@ -281,8 +282,8 @@ const UpdateSchedule = () => {
     });
 
     setValue("stops", reorderedStopValues, {
-      shouldDirty: true,
       shouldValidate: true,
+      shouldDirty: true,
     });
 
     setDraggedIndex(null);
@@ -312,6 +313,10 @@ const UpdateSchedule = () => {
     try {
       setUpdating(true);
 
+      const stopIds = data.stops.map((stop) => stop.stopId);
+
+      const routeResponse = await getRouteGeometryByStops(stopIds);
+
       const payload = {
         ...data,
         departureTime: toIsoDateTime(data.departureTime),
@@ -320,6 +325,7 @@ const UpdateSchedule = () => {
           ...stop,
           expectedArrivalTime: toIsoDateTime(stop.expectedArrivalTime),
         })),
+        routeGeometry: routeResponse.data.data.geometry,
       };
 
       const response = await updateSchedule(id, payload);
@@ -474,12 +480,15 @@ const UpdateSchedule = () => {
                         <span className="cursor-grab text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300">
                           <GripVertical size={18} />
                         </span>
+
                         <span className="w-8 font-semibold text-slate-700 dark:text-slate-200">
                           {index + 1}
                         </span>
+
                         <span className="flex-1 font-medium text-slate-800 dark:text-slate-100">
                           {stop.stopName}
                         </span>
+
                         <Button
                           type="button"
                           variant="danger"

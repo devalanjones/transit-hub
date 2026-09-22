@@ -73,10 +73,131 @@ const getCandidateStopsByRoute = async (routeId) => {
   const destinationLatitude = route.destination.latitude;
   const destinationLongitude = route.destination.longitude;
 
-  const osrmUrl =
+  // Get all stops currently available in database
+  const stops = await Stop.find().lean();
+
+  if (stops.length === 0) {
+    return [];
+  }
+
+  // Get the normal source → destination route
+  const baseUrl =
     `https://router.project-osrm.org/route/v1/driving/` +
     `${sourceLongitude},${sourceLatitude};` +
     `${destinationLongitude},${destinationLatitude}`;
+
+  const { stdout: baseStdout } = await execFileAsync(
+    "curl",
+    [
+      "-s",
+      "--max-time",
+      "30",
+      "-G",
+      baseUrl,
+      "--data-urlencode",
+      "overview=false",
+    ]
+  );
+
+  const baseRouteData = JSON.parse(baseStdout);
+
+  if (
+    !baseRouteData.routes ||
+    baseRouteData.routes.length === 0
+  ) {
+    const error = new Error("Road route not found");
+    error.status = 404;
+    throw error;
+  }
+
+  const baseDistance =
+    baseRouteData.routes[0].distance;
+
+  const candidateStops = [];
+
+  // Check every stop
+  for (const stop of stops) {
+
+    const stopUrl =
+      `https://router.project-osrm.org/route/v1/driving/` +
+      `${sourceLongitude},${sourceLatitude};` +
+      `${stop.longitude},${stop.latitude};` +
+      `${destinationLongitude},${destinationLatitude}`;
+
+    try {
+
+      const { stdout } = await execFileAsync(
+        "curl",
+        [
+          "-s",
+          "--max-time",
+          "30",
+          "-G",
+          stopUrl,
+          "--data-urlencode",
+          "overview=false",
+        ]
+      );
+
+      const routeData = JSON.parse(stdout);
+
+      if (
+        !routeData.routes ||
+        routeData.routes.length === 0
+      ) {
+        continue;
+      }
+
+      const routeDistance =
+        routeData.routes[0].distance;
+
+      // Allow routes up to 50% longer than the normal route
+      if (routeDistance <= baseDistance * 1.5) {
+
+        candidateStops.push(stop);
+
+      }
+
+    } catch (error) {
+
+      continue;
+
+    }
+
+  }
+
+  return candidateStops;
+};
+
+const getRouteGeometryByStops = async (stopIds) => {
+
+  if (!stopIds || stopIds.length < 2) {
+    const error = new Error("At least two stops are required");
+    error.status = 400;
+    throw error;
+  }
+
+  const stops = await Stop.find({
+    _id: { $in: stopIds }
+  }).lean();
+
+  if (stops.length !== stopIds.length) {
+    const error = new Error("One or more stops not found");
+    error.status = 404;
+    throw error;
+  }
+
+  // Keep the same order selected by admin
+  const orderedStops = stopIds.map((stopId) =>
+    stops.find((stop) => stop._id.toString() === stopId.toString())
+  );
+
+  const coordinates = orderedStops
+    .map((stop) => `${stop.longitude},${stop.latitude}`)
+    .join(";");
+
+  const osrmUrl =
+    `https://router.project-osrm.org/route/v1/driving/${coordinates}`;
 
   const { stdout } = await execFileAsync(
     "curl",
@@ -90,55 +211,22 @@ const getCandidateStopsByRoute = async (routeId) => {
       "overview=full",
       "--data-urlencode",
       "geometries=geojson",
-      "--data-urlencode",
-      "alternatives=true",
     ]
   );
 
   const routeData = JSON.parse(stdout);
 
   if (!routeData.routes || routeData.routes.length === 0) {
-    throw new Error("Road route not found");
+    const error = new Error("Road route not found");
+    error.status = 404;
+    throw error;
   }
 
-  const stops = await Stop.find().lean();
-
-  // Temporary distance check.
-  // We will improve this after confirming the OSRM route works.
-  const candidateStops = stops.filter((stop) => {
-
-    return routeData.routes.some((roadRoute) => {
-
-      const coordinates =
-        roadRoute.geometry.coordinates;
-
-      for (let i = 0; i < coordinates.length - 1; i++) {
-
-        const [startLongitude, startLatitude] =
-          coordinates[i];
-
-        const [endLongitude, endLatitude] =
-          coordinates[i + 1];
-
-        const distance = getDistanceFromSegment(
-          stop.latitude,
-          stop.longitude,
-          startLatitude,
-          startLongitude,
-          endLatitude,
-          endLongitude
-        );
-
-        if (distance <= 500) {
-          return true;
-        }
-      }
-
-      return false;
-    });
-
-  });
-  return candidateStops;
+  return {
+    geometry: routeData.routes[0].geometry,
+    distance: routeData.routes[0].distance,
+    duration: routeData.routes[0].duration,
+  };
 };
 
 const createSchedule = async (data) => {
@@ -271,6 +359,7 @@ module.exports = {
   getSchedulesByRoute,
   getSchedulesByStop,
   getCandidateStopsByRoute,
+  getRouteGeometryByStops,
   updateSchedule,
   deleteSchedule,
 };

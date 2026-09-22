@@ -16,6 +16,7 @@ import { getAllRoutes } from "../../../services/routeService";
 import {
   createSchedule,
   getCandidateStopsByRoute,
+  getRouteGeometryByStops,
 } from "../../../services/scheduleService";
 
 const CreateSchedule = () => {
@@ -212,6 +213,10 @@ const CreateSchedule = () => {
     try {
       setLoading(true);
 
+      const stopIds = data.stops.map((stop) => stop.stopId);
+
+      const routeResponse = await getRouteGeometryByStops(stopIds);
+
       const payload = {
         ...data,
         departureTime: toIsoDateTime(data.departureTime),
@@ -220,6 +225,8 @@ const CreateSchedule = () => {
           ...stop,
           expectedArrivalTime: toIsoDateTime(stop.expectedArrivalTime),
         })),
+
+        routeGeometry: routeResponse.data.data.geometry,
       };
 
       const response = await createSchedule(payload);
