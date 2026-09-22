@@ -1,22 +1,28 @@
-import { yupResolver } from "@hookform/resolvers/yup";
-import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
-import createScheduleSchema from "../../../validations/schedule/createScheduleSchema";
 import { useEffect, useState } from "react";
-import { getAllBuses } from "../../../services/busService";
-import { getAllRoutes } from "../../../services/routeService";
+import { useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { toast } from "sonner";
+import { ArrowLeft, GripVertical, Trash2 } from "lucide-react";
+
 import Select from "../../../components/common/Select";
 import ErrorMessage from "../../../components/common/ErrorMessage";
 import Button from "../../../components/common/Button";
-import { toast } from "sonner";
 import Input from "../../../components/common/Input";
-import { createSchedule, getCandidateStopsByRoute, getRouteGeometryByStops, } from "../../../services/scheduleService";
 import FormattedTime from "../../../components/common/FormattedTime";
+import createScheduleSchema from "../../../validations/schedule/createScheduleSchema";
+import { getAllBuses } from "../../../services/busService";
+import { getAllRoutes } from "../../../services/routeService";
+import {
+  createSchedule,
+  getCandidateStopsByRoute,
+  getRouteGeometryByStops,
+} from "../../../services/scheduleService";
 
 const CreateSchedule = () => {
-  let navigate = useNavigate();
+  const navigate = useNavigate();
 
-  let {
+  const {
     register,
     handleSubmit,
     setValue,
@@ -32,19 +38,18 @@ const CreateSchedule = () => {
     },
   });
 
-  let [buses, setBuses] = useState([]);
-  let [routes, setRoutes] = useState([]);
-  let [stops, setStops] = useState([]);
-  let [selectedStops, setSelectedStops] = useState([]);
-  let [loading, setLoading] = useState(false);
-  let [draggedIndex, setDraggedIndex] = useState(null);
+  const [buses, setBuses] = useState([]);
+  const [routes, setRoutes] = useState([]);
+  const [stops, setStops] = useState([]);
+  const [selectedStops, setSelectedStops] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [draggedIndex, setDraggedIndex] = useState(null);
 
-  // Watch time values for live formatted preview
   const watchedDepartureTime = watch("departureTime");
   const watchedArrivalTime = watch("arrivalTime");
   const watchedStops = watch("stops") || [];
 
-  let days = [
+  const days = [
     "Monday",
     "Tuesday",
     "Wednesday",
@@ -54,10 +59,9 @@ const CreateSchedule = () => {
     "Sunday",
   ];
 
-  let [selectedDays, setSelectedDays] = useState([]);
+  const [selectedDays, setSelectedDays] = useState([]);
 
-  let statusOptions = [
-    { value: "", label: "Select Status" },
+  const statusOptions = [
     { value: "ON_TIME", label: "On Time" },
     { value: "DELAYED", label: "Delayed" },
     { value: "CANCELLED", label: "Cancelled" },
@@ -65,15 +69,15 @@ const CreateSchedule = () => {
   ];
 
   useEffect(() => {
-    let fetchData = async () => {
+    const fetchData = async () => {
       try {
-        let [busResponse, routeResponse, stopResponse] = await Promise.all([
+        const [busResponse, routeResponse] = await Promise.all([
           getAllBuses(),
           getAllRoutes(),
         ]);
 
-        setBuses(busResponse.data.data);
-        setRoutes(routeResponse.data.data);
+        setBuses(busResponse.data?.data || []);
+        setRoutes(routeResponse.data?.data || []);
       } catch (error) {
         toast.error(
           error.response?.data?.message || "Failed to load buses and routes",
@@ -84,9 +88,8 @@ const CreateSchedule = () => {
     fetchData();
   }, []);
 
-  let handleRouteChange = async (event) => {
-
-    let routeId = event.target.value;
+  const handleRouteChange = async (event) => {
+    const routeId = event.target.value;
 
     setSelectedStops([]);
     setValue("stops", [], {
@@ -96,36 +99,29 @@ const CreateSchedule = () => {
 
     setStops([]);
 
-    if (!routeId) {
-      return;
-    }
+    if (!routeId) return;
 
     try {
-
-      let response = await getCandidateStopsByRoute(routeId);
-
-      setStops(response.data.data);
-
+      const response = await getCandidateStopsByRoute(routeId);
+      setStops(response.data?.data || []);
     } catch (error) {
-
       toast.error(
-        error.response?.data?.message ||
-        "Failed to load candidate stops"
+        error.response?.data?.message || "Failed to load candidate stops",
       );
-
     }
   };
-  let handleStopChange = (stop) => {
-    let isSelected = selectedStops.some(
-      (selectedStop) => selectedStop._id === stop._id
+
+  const handleStopChange = (stop) => {
+    const isSelected = selectedStops.some(
+      (selectedStop) => selectedStop._id === stop._id,
     );
 
-    let currentStopValues = watch("stops") || [];
+    const currentStopValues = watch("stops") || [];
     let newSelectedStops;
 
     if (isSelected) {
       newSelectedStops = selectedStops.filter(
-        (selectedStop) => selectedStop._id !== stop._id
+        (selectedStop) => selectedStop._id !== stop._id,
       );
     } else {
       newSelectedStops = [...selectedStops, stop];
@@ -133,22 +129,17 @@ const CreateSchedule = () => {
 
     setSelectedStops(newSelectedStops);
 
-    let newStopValues = newSelectedStops.map(
-      (selectedStop, index) => {
+    const newStopValues = newSelectedStops.map((selectedStop, index) => {
+      const existingStop = currentStopValues.find(
+        (stopValue) => stopValue.stopId === selectedStop._id,
+      );
 
-        let existingStop = currentStopValues.find(
-          (stopValue) =>
-            stopValue.stopId === selectedStop._id
-        );
-
-        return {
-          stopId: selectedStop._id,
-          stopSequence: index + 1,
-          expectedArrivalTime:
-            existingStop?.expectedArrivalTime || "",
-        };
-      }
-    );
+      return {
+        stopId: selectedStop._id,
+        stopSequence: index + 1,
+        expectedArrivalTime: existingStop?.expectedArrivalTime || "",
+      };
+    });
 
     setValue("stops", newStopValues, {
       shouldDirty: true,
@@ -158,24 +149,20 @@ const CreateSchedule = () => {
     trigger("stops");
   };
 
-  let handleDrop = (dropIndex) => {
-    if (draggedIndex === null || draggedIndex === dropIndex) {
-      return;
-    }
+  const handleDrop = (dropIndex) => {
+    if (draggedIndex === null || draggedIndex === dropIndex) return;
 
-    let reorderedStops = [...selectedStops];
-
-    let draggedStop = reorderedStops[draggedIndex];
+    const reorderedStops = [...selectedStops];
+    const draggedStop = reorderedStops[draggedIndex];
 
     reorderedStops.splice(draggedIndex, 1);
     reorderedStops.splice(dropIndex, 0, draggedStop);
 
     setSelectedStops(reorderedStops);
 
-    let currentStopValues = watch("stops") || [];
-
-    let reorderedStopValues = reorderedStops.map((stop, index) => {
-      let oldIndex = selectedStops.findIndex(
+    const currentStopValues = watch("stops") || [];
+    const reorderedStopValues = reorderedStops.map((stop, index) => {
+      const oldIndex = selectedStops.findIndex(
         (selectedStop) => selectedStop._id === stop._id,
       );
 
@@ -195,43 +182,22 @@ const CreateSchedule = () => {
     setDraggedIndex(null);
   };
 
-  let handleDayChange = (day) => {
-    let isSelected = selectedDays.includes(day);
-
-    let newSelectedDays;
-
-    if (isSelected) {
-      newSelectedDays = selectedDays.filter(
-        (selectedDay) => selectedDay !== day,
-      );
-    } else {
-      newSelectedDays = [...selectedDays, day];
-    }
+  const handleDayChange = (day) => {
+    const isSelected = selectedDays.includes(day);
+    const newSelectedDays = isSelected
+      ? selectedDays.filter((selectedDay) => selectedDay !== day)
+      : [...selectedDays, day];
 
     setSelectedDays(newSelectedDays);
-
-    setValue("days", newSelectedDays, {
-      shouldDirty: true,
-    });
-
+    setValue("days", newSelectedDays, { shouldDirty: true });
     trigger("days");
   };
 
-  let handleAllDaysChange = () => {
-    let newSelectedDays;
-
-    if (selectedDays.length === days.length) {
-      newSelectedDays = [];
-    } else {
-      newSelectedDays = [...days];
-    }
-
+  const handleAllDaysChange = () => {
+    const newSelectedDays =
+      selectedDays.length === days.length ? [] : [...days];
     setSelectedDays(newSelectedDays);
-
-    setValue("days", newSelectedDays, {
-      shouldDirty: true,
-    });
-
+    setValue("days", newSelectedDays, { shouldDirty: true });
     trigger("days");
   };
 
@@ -249,8 +215,7 @@ const CreateSchedule = () => {
 
       const stopIds = data.stops.map((stop) => stop.stopId);
 
-      const routeResponse =
-        await getRouteGeometryByStops(stopIds);
+      const routeResponse = await getRouteGeometryByStops(stopIds);
 
       const payload = {
         ...data,
@@ -265,7 +230,7 @@ const CreateSchedule = () => {
       };
 
       const response = await createSchedule(payload);
-      toast.success(response.data.message);
+      toast.success(response.data?.message || "Schedule created successfully");
       navigate("/admin/schedules");
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to create schedule");
@@ -274,78 +239,73 @@ const CreateSchedule = () => {
     }
   };
 
-  let busOptions = [
-    {
-      value: "",
-      label: "Select Bus",
-    },
-    ...buses.map((bus) => ({
-      value: bus._id,
-      label: `${bus.busRegNumber} - ${bus.busName}`,
-    })),
-  ];
+  const busOptions = buses.map((bus) => ({
+    value: bus._id,
+    label: `${bus.busRegNumber} - ${bus.busName}`,
+  }));
 
-  let routeOptions = [
-    {
-      value: "",
-      label: "Select Route",
-    },
-    ...routes.map((route) => ({
-      value: route._id,
-      label: route.routeName,
-    })),
-  ];
+  const routeOptions = routes.map((route) => ({
+    value: route._id,
+    label: route.routeName,
+  }));
 
-  let availableStopOptions = [
-    {
-      value: "",
-      label: "Select Stop",
-    },
-    ...stops
-      .filter(
-        (stop) =>
-          !selectedStops.some(
-            (selectedStop) => selectedStop._id === stop._id,
-          ),
-      )
-      .map((stop) => ({
-        value: stop._id,
-        label: stop.stopName,
-      })),
-  ];
+  const availableStopOptions = stops
+    .filter(
+      (stop) =>
+        !selectedStops.some((selectedStop) => selectedStop._id === stop._id),
+    )
+    .map((stop) => ({
+      value: stop._id,
+      label: stop.stopName,
+    }));
 
   return (
-    <div className="p-6">
+    <div className="space-y-6">
       {/* Back Button */}
-      <div className="mb-6">
-        <Button onClick={() => navigate("/admin/schedules")}>← Back</Button>
+      <div className="flex items-center justify-between">
+        <Button
+          variant="secondary"
+          onClick={() => navigate("/admin/schedules")}
+          className="w-fit"
+        >
+          <ArrowLeft size={16} />
+          <span>Back</span>
+        </Button>
       </div>
 
       {/* Heading */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Create Schedule</h1>
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          Create Schedule
+        </h1>
       </div>
 
-      {/* Form */}
-      <div className="rounded-lg border border-gray-300 p-6">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-          {/* Bus */}
+      {/* Form Container */}
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs transition-colors duration-200 dark:border-slate-800 dark:bg-slate-900 sm:p-8">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          {/* 1. Bus */}
           <div>
             <label
               htmlFor="busId"
-              className="mb-2 block font-medium text-gray-700"
+              className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-100"
             >
               Bus
             </label>
-            <Select id="busId" {...register("busId")} options={busOptions} />
+            <Select
+              id="busId"
+              {...register("busId")}
+              placeholder="Select Bus"
+              options={busOptions}
+              error={Boolean(errors.busId)}
+            />
             {errors.busId && <ErrorMessage message={errors.busId.message} />}
           </div>
 
-          {/* Route */}
+          {/* 2. Route */}
           <div>
             <label
               htmlFor="routeId"
-              className="mb-2 block font-medium text-gray-700"
+              className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-100"
             >
               Route
             </label>
@@ -354,43 +314,45 @@ const CreateSchedule = () => {
               {...register("routeId", {
                 onChange: handleRouteChange,
               })}
+              placeholder="Select Route"
               options={routeOptions}
+              error={Boolean(errors.routeId)}
             />
             {errors.routeId && (
               <ErrorMessage message={errors.routeId.message} />
             )}
           </div>
 
-          {/* Stops */}
+          {/* 3. Stops */}
           <div>
-            <h2 className="mb-4 text-lg font-semibold text-gray-800">Stops</h2>
+            <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">
+              Stops
+            </h2>
 
             <div>
-              <h3 className="mb-3 font-medium text-gray-700">
+              <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-100">
                 Available Stops
               </h3>
 
               <Select
                 id="stopId"
                 value=""
-                onChange={(event) => {
-                  let stop = stops.find(
-                    (stop) => stop._id === event.target.value
-                  );
-
-                  if (stop) {
-                    handleStopChange(stop);
-                  }
-                }}
+                placeholder="Select Stop"
                 options={availableStopOptions}
+                disabled={availableStopOptions.length === 0}
+                onChange={(event) => {
+                  const stop = stops.find((s) => s._id === event.target.value);
+                  if (stop) handleStopChange(stop);
+                }}
               />
-
             </div>
 
             <div className="mt-6">
               <div className="mb-3 flex items-center">
-                <h3 className="font-medium text-gray-700">Selected Stops</h3>
-                <span className="ml-auto w-40 font-medium text-gray-700">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-100">
+                  Selected Stops
+                </h3>
+                <span className="ml-auto w-40 text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-100">
                   Expected Arrival Time
                 </span>
               </div>
@@ -398,7 +360,8 @@ const CreateSchedule = () => {
               {selectedStops.length > 0 ? (
                 <div className="space-y-2">
                   {selectedStops.map((stop, index) => {
-                    const currentStopVal = watchedStops[index]?.expectedArrivalTime;
+                    const currentStopVal =
+                      watchedStops[index]?.expectedArrivalTime;
 
                     return (
                       <div
@@ -407,30 +370,39 @@ const CreateSchedule = () => {
                         onDragStart={() => setDraggedIndex(index)}
                         onDragOver={(event) => event.preventDefault()}
                         onDrop={() => handleDrop(index)}
-                        className="flex items-center gap-4 rounded-lg border border-gray-300 px-4 py-3"
+                        className="flex items-center gap-4 rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 transition hover:border-slate-300 dark:border-slate-800 dark:bg-slate-950/40 dark:hover:border-slate-700"
                       >
-                        <span className="cursor-move text-gray-500">☷</span>
+                        <span className="cursor-grab text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300">
+                          <GripVertical size={18} />
+                        </span>
 
-                        <span className="w-8 font-medium text-gray-700">
+                        <span className="w-8 font-semibold text-slate-700 dark:text-slate-200">
                           {index + 1}
                         </span>
 
-                        <span className="flex-1 text-gray-700">
+                        <span className="flex-1 font-medium text-slate-800 dark:text-slate-100">
                           {stop.stopName}
                         </span>
 
                         <Button
                           type="button"
+                          variant="danger"
+                          size="sm"
                           onClick={() => handleStopChange(stop)}
-                          className="bg-red-500 hover:bg-red-600 px-3 py-1 text-sm"
+                          className="px-3 py-1 text-xs"
                         >
-                          Remove
+                          <Trash2 size={14} className="sm:hidden" />
+                          <span className="hidden sm:inline">Remove</span>
                         </Button>
 
                         <div className="w-40">
                           <Input
                             type="time"
                             {...register(`stops.${index}.expectedArrivalTime`)}
+                            error={Boolean(
+                              errors.stops?.[index]?.expectedArrivalTime,
+                            )}
+                            className="py-1.5 text-xs dark:text-white"
                           />
 
                           {/* Live Formatted Stop Time Preview */}
@@ -438,7 +410,7 @@ const CreateSchedule = () => {
                             <div className="mt-1">
                               <FormattedTime
                                 value={currentStopVal}
-                                className="text-xs text-blue-600"
+                                className="text-xs font-semibold text-orange-600 dark:text-orange-400"
                               />
                             </div>
                           )}
@@ -456,42 +428,55 @@ const CreateSchedule = () => {
                   })}
                 </div>
               ) : (
-                <p className="text-gray-500">No stops selected</p>
+                <p className="text-sm text-slate-500 dark:text-slate-300">
+                  No stops selected
+                </p>
               )}
 
               {errors.stops && !Array.isArray(errors.stops) && (
-                <ErrorMessage message={errors.stops.message} />
+                <div className="mt-2">
+                  <ErrorMessage message={errors.stops.message} />
+                </div>
               )}
             </div>
           </div>
 
-          {/* Days */}
+          {/* 4. Days */}
           <div>
-            <h2 className="mb-4 text-lg font-semibold text-gray-800">Days</h2>
+            <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">
+              Days
+            </h2>
 
             <div className="space-y-3">
               {/* All Days */}
-              <label className="flex items-center gap-3">
-                <Input
+              <label className="flex cursor-pointer items-center gap-3">
+                <input
                   type="checkbox"
                   checked={selectedDays.length === days.length}
                   onChange={handleAllDaysChange}
-                  className="!h-4 !w-4"
+                  className="h-4 w-4 rounded-md border-slate-300 text-orange-600 focus:ring-orange-500 dark:border-slate-700 dark:bg-slate-800"
                 />
-                <span className="text-gray-700">All Days</span>
+                <span className="font-medium text-slate-800 dark:text-slate-100">
+                  All Days
+                </span>
               </label>
 
               {/* Individual Days */}
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
                 {days.map((day) => (
-                  <label key={day} className="flex items-center gap-3">
-                    <Input
+                  <label
+                    key={day}
+                    className="flex cursor-pointer items-center gap-3"
+                  >
+                    <input
                       type="checkbox"
                       checked={selectedDays.includes(day)}
                       onChange={() => handleDayChange(day)}
-                      className="!h-4 !w-4"
+                      className="h-4 w-4 rounded-md border-slate-300 text-orange-600 focus:ring-orange-500 dark:border-slate-700 dark:bg-slate-800"
                     />
-                    <span className="text-gray-700">{day}</span>
+                    <span className="font-medium text-slate-800 dark:text-slate-100">
+                      {day}
+                    </span>
                   </label>
                 ))}
               </div>
@@ -500,26 +485,26 @@ const CreateSchedule = () => {
             </div>
           </div>
 
-          {/* Schedule Information */}
+          {/* 5. Schedule Information */}
           <div>
-            <h2 className="mb-4 text-lg font-semibold text-gray-800">
+            <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">
               Schedule Information
             </h2>
 
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               {/* Departure Time */}
               <div>
                 <div className="mb-2 flex items-center justify-between">
                   <label
                     htmlFor="departureTime"
-                    className="font-medium text-gray-700"
+                    className="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-100"
                   >
                     Departure Time
                   </label>
                   {watchedDepartureTime && (
                     <FormattedTime
                       value={watchedDepartureTime}
-                      className="rounded bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700"
+                      className="rounded bg-orange-50 px-2 py-0.5 text-xs font-semibold text-orange-600 dark:bg-orange-950/40 dark:text-orange-400"
                     />
                   )}
                 </div>
@@ -528,6 +513,8 @@ const CreateSchedule = () => {
                   id="departureTime"
                   type="time"
                   {...register("departureTime")}
+                  error={Boolean(errors.departureTime)}
+                  className="dark:text-white"
                 />
 
                 {errors.departureTime && (
@@ -540,14 +527,14 @@ const CreateSchedule = () => {
                 <div className="mb-2 flex items-center justify-between">
                   <label
                     htmlFor="arrivalTime"
-                    className="font-medium text-gray-700"
+                    className="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-100"
                   >
                     Arrival Time
                   </label>
                   {watchedArrivalTime && (
                     <FormattedTime
                       value={watchedArrivalTime}
-                      className="rounded bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700"
+                      className="rounded bg-orange-50 px-2 py-0.5 text-xs font-semibold text-orange-600 dark:bg-orange-950/40 dark:text-orange-400"
                     />
                   )}
                 </div>
@@ -556,6 +543,8 @@ const CreateSchedule = () => {
                   id="arrivalTime"
                   type="time"
                   {...register("arrivalTime")}
+                  error={Boolean(errors.arrivalTime)}
+                  className="dark:text-white"
                 />
 
                 {errors.arrivalTime && (
@@ -568,14 +557,16 @@ const CreateSchedule = () => {
             <div className="mt-5">
               <label
                 htmlFor="status"
-                className="mb-2 block font-medium text-gray-700"
+                className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-100"
               >
                 Status
               </label>
               <Select
                 id="status"
                 {...register("status")}
+                placeholder="Select Status"
                 options={statusOptions}
+                error={Boolean(errors.status)}
               />
               {errors.status && (
                 <ErrorMessage message={errors.status.message} />
@@ -585,8 +576,13 @@ const CreateSchedule = () => {
 
           {/* Create Button */}
           <div className="pt-2">
-            <Button type="submit" disabled={loading}>
-              {loading ? "Creating..." : "Create Schedule"}
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={loading}
+              loading={loading}
+            >
+              Create Schedule
             </Button>
           </div>
         </form>

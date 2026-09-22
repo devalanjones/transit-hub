@@ -1,60 +1,63 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import Loading from "../../../components/common/Loading";
-import ErrorMessage from "../../../components/common/ErrorMessage";
-import { getStopById, deleteStop } from "../../../services/stopService";
 import Swal from "sweetalert2";
 import { toast } from "sonner";
+import {
+  ArrowLeft,
+  Edit3,
+  Trash2,
+  MapPin,
+  Compass,
+  Bus as BusIcon,
+  Route as RouteIcon,
+  CalendarDays,
+} from "lucide-react";
+
+import Loading from "../../../components/common/Loading";
+import ErrorMessage from "../../../components/common/ErrorMessage";
 import Button from "../../../components/common/Button";
 import StopMap from "../../../components/common/StopMap";
 import EmptyState from "../../../components/common/EmptyState";
-import { getSchedulesByStop } from "../../../services/scheduleService";
 import FormattedTime from "../../../components/common/FormattedTime";
+import { getStopById, deleteStop } from "../../../services/stopService";
+import { getSchedulesByStop } from "../../../services/scheduleService";
 
 const StopDetails = () => {
-  let navigate = useNavigate();
-  let { id } = useParams();
+  const navigate = useNavigate();
+  const { id } = useParams();
 
-  let [stop, setStop] = useState(null);
-  let [loading, setLoading] = useState(true);
-  let [error, setError] = useState("");
-  let [assignedSchedules, setAssignedSchedules] = useState([]);
-  let [scheduleLoading, setScheduleLoading] = useState(false);
-  let [scheduleError, setScheduleError] = useState("");
+  const [stop, setStop] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [assignedSchedules, setAssignedSchedules] = useState([]);
+  const [scheduleLoading, setScheduleLoading] = useState(false);
+  const [scheduleError, setScheduleError] = useState("");
 
-  let fetchAssignedSchedules = async () => {
+  const fetchAssignedSchedules = async () => {
     try {
       setScheduleLoading(true);
-
       setScheduleError("");
-
-      let response = await getSchedulesByStop(id);
-
-      let schedule = response.data.data || [];
-
+      const response = await getSchedulesByStop(id);
+      const schedule = response.data?.data || [];
       setAssignedSchedules(schedule.slice(0, 3));
-    } catch (error) {
+    } catch (err) {
       setScheduleError(
-        error.response?.data?.message || "Failed to get assigned schedules",
+        err.response?.data?.message || "Failed to get assigned schedules",
       );
     } finally {
       setScheduleLoading(false);
     }
   };
 
-  let fetchStop = async () => {
+  const fetchStop = async () => {
     try {
       setLoading(true);
-
       setError("");
-
-      let response = await getStopById(id);
-
-      setStop(response.data.data);
-
+      const response = await getStopById(id);
+      setStop(response.data?.data);
       fetchAssignedSchedules();
-    } catch (error) {
-      setError(error.response?.data?.message || "Failed to get stop");
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to get stop");
     } finally {
       setLoading(false);
     }
@@ -69,92 +72,155 @@ const StopDetails = () => {
   }
 
   if (error) {
-    return <ErrorMessage message={error} />;
+    return (
+      <div className="space-y-6">
+        <Button
+          variant="secondary"
+          onClick={() => navigate("/admin/stops")}
+          className="w-fit"
+        >
+          <ArrowLeft size={16} />
+          <span>Back to Stops</span>
+        </Button>
+        <ErrorMessage variant="banner" message={error} />
+      </div>
+    );
   }
 
-  let handleDelete = async () => {
-    let result = await Swal.fire({
+  if (!stop) {
+    return (
+      <div className="space-y-6">
+        <Button
+          variant="secondary"
+          onClick={() => navigate("/admin/stops")}
+          className="w-fit"
+        >
+          <ArrowLeft size={16} />
+          <span>Back to Stops</span>
+        </Button>
+        <EmptyState
+          title="Stop Not Found"
+          message="The requested transit stop could not be found."
+          icon={MapPin}
+        />
+      </div>
+    );
+  }
+
+  const handleDelete = async () => {
+    const result = await Swal.fire({
       title: "Are you sure?",
       text: "You won't be able to revert this!",
       icon: "warning",
-
       showCancelButton: true,
-
       confirmButtonText: "Yes, delete it!",
       cancelButtonText: "Cancel",
+      confirmButtonColor: "#f97316", // orange-500
     });
 
-    if (!result.isConfirmed) {
-      return;
-    }
+    if (!result.isConfirmed) return;
 
     try {
-      let response = await deleteStop(id);
-
-      toast.success(response.data.message);
-
+      const response = await deleteStop(id);
+      toast.success(response.data?.message || "Stop deleted successfully");
       navigate("/admin/stops");
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to Delete Stop");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to Delete Stop");
     }
   };
 
   return (
-    <div className="p-6">
-      {/* Back Button */}
+    <div className="space-y-6">
+      {/* Top Header & Action Row */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <Button
+          variant="secondary"
+          onClick={() => navigate("/admin/stops")}
+          className="w-fit"
+        >
+          <ArrowLeft size={16} />
+          <span>Back to Stops</span>
+        </Button>
 
-      <div className="mb-6">
-        <Button onClick={() => navigate("/admin/stops")}>← Back</Button>
-      </div>
-
-      {/* Heading */}
-
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex-1 text-center">
-          <h1 className="text-2xl font-bold text-gray-800">Stop Details</h1>
-        </div>
-
-        {/* Edit & Delete Button */}
-
-        <div className="flex gap-2">
-          <Button onClick={() => navigate(`/admin/stops/${id}/edit`)}>
-            Edit
+        <div className="flex items-center gap-2">
+          <Button
+            variant="secondary"
+            onClick={() => navigate(`/admin/stops/${id}/edit`)}
+          >
+            <Edit3 size={16} />
+            <span>Edit</span>
           </Button>
 
-          <Button onClick={handleDelete}>Delete</Button>
+          <Button variant="danger" onClick={handleDelete}>
+            <Trash2 size={16} />
+            <span>Delete</span>
+          </Button>
         </div>
       </div>
 
-      {/* Stop Information */}
-
-      <div>
-        <h2 className="text-xl font-semibold text-gray-800 mb-4">
-          Stop Information
-        </h2>
-
-        <div className="border border-gray-300 rounded-lg p-4 space-y-3">
-          <p>
-            <strong>Stop Name</strong> {stop.stopName}
-          </p>
-
-          <p>
-            <strong>Latitude</strong> {stop.latitude}
-          </p>
-
-          <p>
-            <strong>Longitude</strong> {stop.longitude}
+      {/* Page Title & Identifier */}
+      <div className="flex items-center gap-3">
+        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-orange-500/10 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400">
+          <MapPin size={22} />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+            {stop.stopName}
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-300">
+            Coordinates, map location, and transit stop schedules
           </p>
         </div>
       </div>
 
-      {/* Stop Location */}
-
-      <div className="mt-6">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4">
-          Stop Location
+      {/* 1. Stop Information Card */}
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs transition-colors duration-200 dark:border-slate-800 dark:bg-slate-900 sm:p-8">
+        <h2 className="mb-4 flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-white">
+          <Compass size={18} className="text-orange-500" />
+          <span>Stop Information</span>
         </h2>
 
-        <div className="border border-gray-300 rounded-lg overflow-hidden">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          {/* Stop Name */}
+          <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4 dark:border-slate-800/60 dark:bg-slate-950/50">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-300">
+              Stop Name
+            </span>
+            <p className="mt-1 font-semibold text-slate-900 dark:text-white">
+              {stop.stopName}
+            </p>
+          </div>
+
+          {/* Latitude */}
+          <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4 dark:border-slate-800/60 dark:bg-slate-950/50">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-300">
+              Latitude
+            </span>
+            <p className="mt-1 font-semibold font-mono text-slate-900 dark:text-white">
+              {stop.latitude}
+            </p>
+          </div>
+
+          {/* Longitude */}
+          <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4 dark:border-slate-800/60 dark:bg-slate-950/50">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-300">
+              Longitude
+            </span>
+            <p className="mt-1 font-semibold font-mono text-slate-900 dark:text-white">
+              {stop.longitude}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. Stop Location Map Card */}
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs transition-colors duration-200 dark:border-slate-800 dark:bg-slate-900 sm:p-8">
+        <h2 className="mb-4 flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-white">
+          <MapPin size={18} className="text-orange-500" />
+          <span>Stop Location</span>
+        </h2>
+
+        <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800">
           <StopMap
             latitude={stop.latitude}
             longitude={stop.longitude}
@@ -163,66 +229,113 @@ const StopDetails = () => {
         </div>
       </div>
 
-      {/* Assigned Schedules */}
+      {/* 3. Assigned Bus Schedules Card */}
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs transition-colors duration-200 dark:border-slate-800 dark:bg-slate-900 sm:p-8">
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-white">
+              Bus Schedules
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-300">
+              Buses arriving at this stop
+            </p>
+          </div>
 
-      <div className="mt-8">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4">
-          Bus Schedules
-        </h2>
+          {assignedSchedules.length > 0 && (
+            <span className="rounded-lg bg-orange-50 px-2.5 py-1 text-xs font-semibold text-orange-600 dark:bg-orange-950/40 dark:text-orange-400">
+              {assignedSchedules.length} Scheduled
+            </span>
+          )}
+        </div>
 
         {scheduleLoading && <Loading message="Loading Assigned Schedules..." />}
+
+        {!scheduleLoading && scheduleError && (
+          <ErrorMessage variant="banner" message={scheduleError} />
+        )}
 
         {!scheduleLoading &&
           !scheduleError &&
           assignedSchedules.length === 0 && (
-            <EmptyState message="No buses are scheduled for this stop" />
+            <EmptyState
+              title="No Schedules Available"
+              message="No buses are currently scheduled to arrive at this stop."
+              icon={CalendarDays}
+            />
           )}
 
         {!scheduleLoading && !scheduleError && assignedSchedules.length > 0 && (
-          <div className="border border-gray-300 rounded-lg overflow-hidden">
-            <div className="grid grid-cols-4 bg-gray-100 border-b border-gray-300">
-              <div className="p-4 font-semibold text-gray-800">Bus Number</div>
+          <div className="overflow-hidden rounded-xl border border-slate-200/80 dark:border-slate-800">
+            <table className="w-full text-left text-sm text-slate-700 dark:text-slate-200">
+              <thead className="border-b border-slate-200/80 bg-slate-50/75 text-xs font-semibold uppercase tracking-wider text-slate-600 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-200">
+                <tr>
+                  <th scope="col" className="px-5 py-3.5">
+                    Bus Number
+                  </th>
+                  <th scope="col" className="px-5 py-3.5">
+                    Bus Type
+                  </th>
+                  <th scope="col" className="px-5 py-3.5">
+                    Route Name
+                  </th>
+                  <th scope="col" className="px-5 py-3.5">
+                    Expected Arrival Time
+                  </th>
+                </tr>
+              </thead>
 
-              <div className="p-4 font-semibold text-gray-800">Bus Type</div>
+              <tbody className="divide-y divide-slate-200/80 dark:divide-slate-800">
+                {assignedSchedules.map((schedule) => {
+                  const stopSchedule = schedule.stops?.find(
+                    (s) => (s.stopId?._id || s.stopId) === id,
+                  );
 
-              <div className="p-4 font-semibold text-gray-800">Route Name</div>
+                  return (
+                    <tr
+                      key={schedule._id}
+                      className="transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/40"
+                    >
+                      {/* Bus Number */}
+                      <td className="px-5 py-4 font-semibold text-slate-900 dark:text-white">
+                        <div className="flex items-center gap-2">
+                          <BusIcon
+                            size={16}
+                            className="text-orange-500 shrink-0"
+                          />
+                          <span>{schedule?.busId?.busRegNumber || "-"}</span>
+                        </div>
+                      </td>
 
-              <div className="p-4 font-semibold text-gray-800">
-                Expected Arrival Time
-              </div>
-            </div>
+                      {/* Bus Type */}
+                      <td className="px-5 py-4 text-slate-800 dark:text-slate-200">
+                        <span className="rounded-lg bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                          {schedule?.busId?.busType?.busType || "-"}
+                        </span>
+                      </td>
 
-            {assignedSchedules.map((schedule) => {
-              let stopSchedule = schedule.stops.find(
-                (stopSchedule) => stopSchedule.stopId?._id === id,
-              );
+                      {/* Route Name */}
+                      <td className="px-5 py-4 font-medium text-slate-800 dark:text-slate-200">
+                        <div className="flex items-center gap-1.5">
+                          <RouteIcon
+                            size={14}
+                            className="text-slate-400 dark:text-slate-400 shrink-0"
+                          />
+                          <span>{schedule?.routeId?.routeName || "-"}</span>
+                        </div>
+                      </td>
 
-              return (
-                <div
-                  key={schedule._id}
-                  className="grid grid-cols-4 border-b border-gray-200 last:border-b-0"
-                >
-                  <div className="p-4">
-                    {schedule?.busId?.busRegNumber || "-"}
-                  </div>
-
-                  <div className="p-4">
-                    {schedule?.busId?.busType?.busType || "-"}
-                  </div>
-
-                  <div className="p-4">
-                    {schedule?.routeId?.routeName || "-"}
-                  </div>
-
-                  <div className="p-4">
-                    <FormattedTime
-                      value={stopSchedule?.expectedArrivalTime}
-                      fallback="-"
-                    />
-                  </div>
-                </div>
-              );
-            })}
+                      {/* Expected Arrival */}
+                      <td className="px-5 py-4 font-medium text-slate-900 dark:text-white">
+                        <FormattedTime
+                          value={stopSchedule?.expectedArrivalTime}
+                          fallback="-"
+                        />
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         )}
       </div>

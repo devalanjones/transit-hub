@@ -1,387 +1,358 @@
 import { useState } from "react";
-import { Bell, Bus, CalendarDays, ChevronDown, ChevronRight, IndianRupee, LayoutDashboard, LogOut, MapPin, MessageSquare, Route, Users, X } from "lucide-react"
-import { Navigate, NavLink, replace } from "react-router-dom";
-
-
-
+import {
+  Bell,
+  Bus,
+  CalendarDays,
+  ChevronDown,
+  ChevronRight,
+  IndianRupee,
+  LayoutDashboard,
+  LogOut,
+  MapPin,
+  MessageSquare,
+  Route,
+  Users,
+} from "lucide-react";
+import { NavLink, useNavigate } from "react-router-dom";
 
 const AdminSidebar = ({ sidebarOpen, setSidebarOpen }) => {
+  const navigate = useNavigate();
+  const [openMenu, setOpenMenu] = useState(null);
 
+  const toggleMenu = (menu) => {
+    setOpenMenu(openMenu === menu ? null : menu);
+  };
 
-    let [openMenu, setOpenMenu] = useState(null);
-
-    let toggleMenu = (menu) => {
-
-        setOpenMenu(openMenu === menu ? null : menu);
+  const handleLinkClick = () => {
+    if (window.innerWidth < 768) {
+      setSidebarOpen(false);
     }
+  };
 
-    let menuClass = ({ isActive }) =>
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    navigate("/login", { replace: true });
+  };
 
-        `flex items-center gap-3 px-4 py-2 rounded-lg transition ${isActive
-            ? "bg-blue-600 text-white"
-            : "text-gray-700 hover:bg-gray-100"
-        }`;
+  // Main menu styling: Vibrant orange gradient when active, crisp slate text in dark mode
+  const menuClass = ({ isActive }) =>
+    `flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+      isActive
+        ? "bg-gradient-to-r from-orange-600 to-orange-500 text-white shadow-xs font-semibold"
+        : "text-slate-700 hover:bg-orange-50/70 hover:text-orange-600 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-white"
+    }`;
 
+  // Submenu styling: Orange tint badge when active
+  const subMenuClass = ({ isActive }) =>
+    `flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+      isActive
+        ? "bg-orange-50 font-semibold text-orange-600 dark:bg-orange-500/15 dark:text-orange-400"
+        : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+    }`;
 
+  return (
+    <>
+      {/* Mobile Backdrop */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
 
+      {/* Sidebar Panel */}
+      <aside
+        className={`fixed top-16 left-0 z-50 h-[calc(100vh-4rem)] w-64 border-r border-slate-200/80 bg-white text-slate-800 transition-all duration-300 ease-in-out dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 overflow-y-auto ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <nav className="p-3 space-y-1">
+          {/* Dashboard */}
+          <NavLink
+            to="/admin/dashboard"
+            end
+            className={menuClass}
+            onClick={handleLinkClick}
+          >
+            <LayoutDashboard size={19} />
+            <span>Dashboard</span>
+          </NavLink>
 
-    return (
+          {/* Users */}
+          <NavLink
+            to="/admin/users"
+            className={menuClass}
+            onClick={handleLinkClick}
+          >
+            <Users size={19} />
+            <span>Users</span>
+          </NavLink>
 
-        <>
-
-            {/* {sidebarOpen && (
-
-                <div
-                    className="fixed inset-0 bg-black/30 z-40 md:hidden"
-                    onClick={() => setSidebarOpen(false)}
-                />
-            )} */}
-
-            <aside
-                className={`fixed top-16 left-0 z-40
-                    h-[calc(100vh-4rem)] w-64 bg-white border-r border-gray-200
-                    transform transition-transform duration-300
-                    ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-                    md:translate-x-0
-
-                `}
+          {/* Buses Dropdown */}
+          <div>
+            <button
+              type="button"
+              onClick={() => toggleMenu("buses")}
+              className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-medium text-slate-700 hover:bg-orange-50/70 hover:text-orange-600 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-white transition-colors"
             >
-
-                <div className="flex items-center justify-between px-5 border-b border-gray-200">
-
-
-
-                    <button
-                        onClick={() => setSidebarOpen(false)}
-                        className="p-2 rounded-lg hover:bg-gray-100 md:hidden"
-                    >
-                        {/* <X size={22} /> */}
-
-                    </button>
-
-                </div>
-
-                <nav className="p-4 space-y-2">
-
-                    <NavLink
-                        to="/admin/dashboard"
-                        className={menuClass}
-                        onClick={() => setSidebarOpen(false)}
-                    >
-                        <LayoutDashboard size={20} />
-                        <span>Dashboard</span>
-
-                    </NavLink>
-
-                    {/* Users */}
-                    <NavLink
-                        to="/admin/users"
-                        className={menuClass}
-                        onClick={() => setSidebarOpen(false)}
-                    >
-                        <Users size={20} />
-                        <span>Users</span>
-
-                    </NavLink>
-
-
-                    {/* Buses */}
-                    <div>
-
-                        <button
-                            onClick={() => toggleMenu("buses")}
-                            className="w-full flex items-center justify-between px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-100"
-                        >
-                            <div className="flex items-center gap-3">
-                                <Bus size={20} />
-                                <span>Buses</span>
-                            </div>
-
-                            {openMenu === "buses" ? (
-                                <ChevronDown size={18} />
-                            ) : (
-                                <ChevronRight size={18} />
-                            )}
-                        </button>
-
-                        {openMenu === "buses" && (
-                            <div className="ml-8 mt-1 space-y-1">
-
-                                <NavLink
-                                    to="/admin/buses"
-                                    className={menuClass}
-                                    onClick={() => setSidebarOpen(false)}
-                                >
-                                    Bus List
-                                </NavLink>
-
-                                <NavLink
-                                    to="/admin/buses/create"
-                                    className={menuClass}
-                                    onClick={() => setSidebarOpen(false)}
-                                >
-                                    Add Bus
-                                </NavLink>
-
-                            </div>
-                        )}
-
-                    </div>
-
-
-                    {/* Routes */}
-                    <div>
-
-                        <button
-                            onClick={() => toggleMenu("routes")}
-                            className="w-full flex items-center justify-between px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-100"
-                        >
-                            <div className="flex items-center gap-3">
-                                <Route size={20} />
-                                <span>Routes</span>
-                            </div>
-
-                            {openMenu === "routes" ? (
-                                <ChevronDown size={18} />
-                            ) : (
-                                <ChevronRight size={18} />
-                            )}
-                        </button>
-
-                        {openMenu === "routes" && (
-                            <div className="ml-8 mt-1 space-y-1">
-
-                                <NavLink
-                                    to="/admin/routes"
-                                    className={menuClass}
-                                    onClick={() => setSidebarOpen(false)}
-                                >
-                                    Route List
-                                </NavLink>
-
-                                <NavLink
-                                    to="/admin/routes/create"
-                                    className={menuClass}
-                                    onClick={() => setSidebarOpen(false)}
-                                >
-                                    Add Route
-                                </NavLink>
-
-                            </div>
-                        )}
-
-                    </div>
-
-
-                    {/* Stops */}
-                    <div>
-
-                        <button
-                            onClick={() => toggleMenu("stops")}
-                            className="w-full flex items-center justify-between px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-100"
-                        >
-                            <div className="flex items-center gap-3">
-                                <MapPin size={20} />
-                                <span>Stops</span>
-                            </div>
-
-                            {openMenu === "stops" ? (
-                                <ChevronDown size={18} />
-                            ) : (
-                                <ChevronRight size={18} />
-                            )}
-                        </button>
-
-                        {openMenu === "stops" && (
-                            <div className="ml-8 mt-1 space-y-1">
-
-                                <NavLink
-                                    to="/admin/stops"
-                                    className={menuClass}
-                                    onClick={() => setSidebarOpen(false)}
-                                >
-                                    Stop List
-                                </NavLink>
-
-                                <NavLink
-                                    to="/admin/stops/create"
-                                    className={menuClass}
-                                    onClick={() => setSidebarOpen(false)}
-                                >
-                                    Add Stop
-                                </NavLink>
-
-                            </div>
-                        )}
-
-                    </div>
-
-
-                    {/* Fares */}
-                    <div>
-
-                        <button
-                            onClick={() => toggleMenu("fares")}
-                            className="w-full flex items-center justify-between px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-100"
-                        >
-                            <div className="flex items-center gap-3">
-                                <IndianRupee size={20} />
-                                <span>Fares</span>
-                            </div>
-
-                            {openMenu === "fares" ? (
-                                <ChevronDown size={18} />
-                            ) : (
-                                <ChevronRight size={18} />
-                            )}
-                        </button>
-
-                        {openMenu === "fares" && (
-                            <div className="ml-8 mt-1 space-y-1">
-
-                                <NavLink
-                                    to="/admin/fares"
-                                    className={menuClass}
-                                    onClick={() => setSidebarOpen(false)}
-                                >
-                                    Fare List
-                                </NavLink>
-
-                                <NavLink
-                                    to="/admin/fares/create"
-                                    className={menuClass}
-                                    onClick={() => setSidebarOpen(false)}
-                                >
-                                    Add Fare
-                                </NavLink>
-
-                            </div>
-                        )}
-
-                    </div>
-
-
-                    {/* Schedules */}
-                    <div>
-
-                        <button
-                            onClick={() => toggleMenu("schedules")}
-                            className="w-full flex items-center justify-between px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-100"
-                        >
-                            <div className="flex items-center gap-3">
-                                <CalendarDays size={20} />
-                                <span>Schedules</span>
-                            </div>
-
-                            {openMenu === "schedules" ? (
-                                <ChevronDown size={18} />
-                            ) : (
-                                <ChevronRight size={18} />
-                            )}
-                        </button>
-
-                        {openMenu === "schedules" && (
-                            <div className="ml-8 mt-1 space-y-1">
-
-                                <NavLink
-                                    to="/admin/schedules"
-                                    className={menuClass}
-                                    onClick={() => setSidebarOpen(false)}
-                                >
-                                    Schedule List
-                                </NavLink>
-
-                                <NavLink
-                                    to="/admin/schedules/create"
-                                    className={menuClass}
-                                    onClick={() => setSidebarOpen(false)}
-                                >
-                                    Add Schedule
-                                </NavLink>
-
-                            </div>
-                        )}
-
-                    </div>
-
-
-                    {/* Notifications */}
-                    <div>
-
-                        <button
-                            onClick={() => toggleMenu("notifications")}
-                            className="w-full flex items-center justify-between px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-100"
-                        >
-                            <div className="flex items-center gap-3">
-                                <Bell size={20} />
-                                <span>Notifications</span>
-                            </div>
-
-                            {openMenu === "notifications" ? (
-                                <ChevronDown size={18} />
-                            ) : (
-                                <ChevronRight size={18} />
-                            )}
-                        </button>
-
-                        {openMenu === "notifications" && (
-                            <div className="ml-8 mt-1 space-y-1">
-
-                                <NavLink
-                                    to="/admin/notifications"
-                                    className={menuClass}
-                                    onClick={() => setSidebarOpen(false)}
-                                >
-                                    Notification List
-                                </NavLink>
-
-                                <NavLink
-                                    to="/admin/notifications/create"
-                                    className={menuClass}
-                                    onClick={() => setSidebarOpen(false)}
-                                >
-                                    Add Notification
-                                </NavLink>
-
-                            </div>
-                        )}
-
-                    </div>
-
-
-                    {/* Feedbacks */}
-                    <NavLink
-                        to="/admin/feedbacks"
-                        className={menuClass}
-                        onClick={() => setSidebarOpen(false)}
-                    >
-                        <MessageSquare size={20} />
-                        <span>Feedbacks</span>
-
-                    </NavLink>
-
-                    <button onClick={() => {
-
-                        localStorage.removeItem(token);
-                        Navigate("/login", { replace: true });
-                    }}
-                        className="w=full flex items-center gap-3 px-4 py-2 rounded-lg text-red-600 hover:bg-red-50"
-                    >
-                        <LogOut size={20} />
-                        <span>LogOut</span>
-
-
-                    </button>
-
-
-
-                </nav>
-
-
-            </aside>
-
-        </>
-    )
-}
-
-export default AdminSidebar
+              <div className="flex items-center gap-3">
+                <Bus size={19} />
+                <span>Buses</span>
+              </div>
+              {openMenu === "buses" ? (
+                <ChevronDown size={16} />
+              ) : (
+                <ChevronRight size={16} />
+              )}
+            </button>
+
+            {openMenu === "buses" && (
+              <div className="ml-6 mt-1 space-y-1 border-l-2 border-slate-200 dark:border-slate-800 pl-2">
+                <NavLink
+                  to="/admin/buses"
+                  end
+                  className={subMenuClass}
+                  onClick={handleLinkClick}
+                >
+                  Bus List
+                </NavLink>
+                <NavLink
+                  to="/admin/buses/create"
+                  end
+                  className={subMenuClass}
+                  onClick={handleLinkClick}
+                >
+                  Add Bus
+                </NavLink>
+              </div>
+            )}
+          </div>
+
+          {/* Routes Dropdown */}
+          <div>
+            <button
+              type="button"
+              onClick={() => toggleMenu("routes")}
+              className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-medium text-slate-700 hover:bg-orange-50/70 hover:text-orange-600 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-white transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <Route size={19} />
+                <span>Routes</span>
+              </div>
+              {openMenu === "routes" ? (
+                <ChevronDown size={16} />
+              ) : (
+                <ChevronRight size={16} />
+              )}
+            </button>
+
+            {openMenu === "routes" && (
+              <div className="ml-6 mt-1 space-y-1 border-l-2 border-slate-200 dark:border-slate-800 pl-2">
+                <NavLink
+                  to="/admin/routes"
+                  end
+                  className={subMenuClass}
+                  onClick={handleLinkClick}
+                >
+                  Route List
+                </NavLink>
+                <NavLink
+                  to="/admin/routes/create"
+                  end
+                  className={subMenuClass}
+                  onClick={handleLinkClick}
+                >
+                  Add Route
+                </NavLink>
+              </div>
+            )}
+          </div>
+
+          {/* Stops Dropdown */}
+          <div>
+            <button
+              type="button"
+              onClick={() => toggleMenu("stops")}
+              className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-medium text-slate-700 hover:bg-orange-50/70 hover:text-orange-600 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-white transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <MapPin size={19} />
+                <span>Stops</span>
+              </div>
+              {openMenu === "stops" ? (
+                <ChevronDown size={16} />
+              ) : (
+                <ChevronRight size={16} />
+              )}
+            </button>
+
+            {openMenu === "stops" && (
+              <div className="ml-6 mt-1 space-y-1 border-l-2 border-slate-200 dark:border-slate-800 pl-2">
+                <NavLink
+                  to="/admin/stops"
+                  end
+                  className={subMenuClass}
+                  onClick={handleLinkClick}
+                >
+                  Stop List
+                </NavLink>
+                <NavLink
+                  to="/admin/stops/create"
+                  end
+                  className={subMenuClass}
+                  onClick={handleLinkClick}
+                >
+                  Add Stop
+                </NavLink>
+              </div>
+            )}
+          </div>
+
+          {/* Fares Dropdown */}
+          <div>
+            <button
+              type="button"
+              onClick={() => toggleMenu("fares")}
+              className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-medium text-slate-700 hover:bg-orange-50/70 hover:text-orange-600 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-white transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <IndianRupee size={19} />
+                <span>Fares</span>
+              </div>
+              {openMenu === "fares" ? (
+                <ChevronDown size={16} />
+              ) : (
+                <ChevronRight size={16} />
+              )}
+            </button>
+
+            {openMenu === "fares" && (
+              <div className="ml-6 mt-1 space-y-1 border-l-2 border-slate-200 dark:border-slate-800 pl-2">
+                <NavLink
+                  to="/admin/fares"
+                  end
+                  className={subMenuClass}
+                  onClick={handleLinkClick}
+                >
+                  Fare List
+                </NavLink>
+                <NavLink
+                  to="/admin/fares/create"
+                  end
+                  className={subMenuClass}
+                  onClick={handleLinkClick}
+                >
+                  Add Fare
+                </NavLink>
+              </div>
+            )}
+          </div>
+
+          {/* Schedules Dropdown */}
+          <div>
+            <button
+              type="button"
+              onClick={() => toggleMenu("schedules")}
+              className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-medium text-slate-700 hover:bg-orange-50/70 hover:text-orange-600 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-white transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <CalendarDays size={19} />
+                <span>Schedules</span>
+              </div>
+              {openMenu === "schedules" ? (
+                <ChevronDown size={16} />
+              ) : (
+                <ChevronRight size={16} />
+              )}
+            </button>
+
+            {openMenu === "schedules" && (
+              <div className="ml-6 mt-1 space-y-1 border-l-2 border-slate-200 dark:border-slate-800 pl-2">
+                <NavLink
+                  to="/admin/schedules"
+                  end
+                  className={subMenuClass}
+                  onClick={handleLinkClick}
+                >
+                  Schedule List
+                </NavLink>
+                <NavLink
+                  to="/admin/schedules/create"
+                  end
+                  className={subMenuClass}
+                  onClick={handleLinkClick}
+                >
+                  Add Schedule
+                </NavLink>
+              </div>
+            )}
+          </div>
+
+          {/* Notifications Dropdown */}
+          <div>
+            <button
+              type="button"
+              onClick={() => toggleMenu("notifications")}
+              className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-medium text-slate-700 hover:bg-orange-50/70 hover:text-orange-600 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-white transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <Bell size={19} />
+                <span>Notifications</span>
+              </div>
+              {openMenu === "notifications" ? (
+                <ChevronDown size={16} />
+              ) : (
+                <ChevronRight size={16} />
+              )}
+            </button>
+
+            {openMenu === "notifications" && (
+              <div className="ml-6 mt-1 space-y-1 border-l-2 border-slate-200 dark:border-slate-800 pl-2">
+                <NavLink
+                  to="/admin/notifications"
+                  end
+                  className={subMenuClass}
+                  onClick={handleLinkClick}
+                >
+                  Notification List
+                </NavLink>
+                <NavLink
+                  to="/admin/notifications/create"
+                  end
+                  className={subMenuClass}
+                  onClick={handleLinkClick}
+                >
+                  Add Notification
+                </NavLink>
+              </div>
+            )}
+          </div>
+
+          {/* Feedbacks */}
+          <NavLink
+            to="/admin/feedbacks"
+            className={menuClass}
+            onClick={handleLinkClick}
+          >
+            <MessageSquare size={19} />
+            <span>Feedbacks</span>
+          </NavLink>
+
+          {/* Logout */}
+          <div className="pt-4 mt-2 border-t border-slate-200 dark:border-slate-800">
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 dark:text-rose-400 dark:hover:bg-rose-950/30 transition-colors"
+            >
+              <LogOut size={19} />
+              <span>LogOut</span>
+            </button>
+          </div>
+        </nav>
+      </aside>
+    </>
+  );
+};
+
+export default AdminSidebar;
