@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 
 export const formatTimeValue = (
   timeValue,
-  { hour12 = true, useUTC = true, fallback = "N/A" } = {}
+  { hour12 = true, useUTC = false, fallback = "N/A" } = {},
 ) => {
   if (!timeValue) return fallback;
 
@@ -27,27 +27,23 @@ export const formatTimeValue = (
     hour: "2-digit",
     minute: "2-digit",
     hour12,
-    ...(useUTC ? { timeZone: "UTC" } : {}),
+    ...(useUTC ? { timeZone: "UTC" } : {}), // Uses browser local time (IST) when useUTC is false
   });
 };
 
 const FormattedTime = ({
   value,
   hour12 = true,
-  useUTC = false,
+  useUTC = false, // MUST BE FALSE for Indian local time
   fallback = "N/A",
   className = "",
 }) => {
   const formatted = useMemo(
     () => formatTimeValue(value, { hour12, useUTC, fallback }),
-    [value, hour12, useUTC, fallback]
+    [value, hour12, useUTC, fallback],
   );
 
-  return (
-    <span className={`font-mono text-sm ${className}`}>
-      {formatted}
-    </span>
-  );
+  return <span className={`font-mono text-sm ${className}`}>{formatted}</span>;
 };
 
 export default FormattedTime;

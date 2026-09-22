@@ -21,26 +21,33 @@ import Select from "../../../components/common/Select";
 import Input from "../../../components/common/Input";
 import FormattedTime from "../../../components/common/FormattedTime";
 
-// Converts incoming Date / ISO / string timestamps to "HH:mm" for <input type="time"/>
+// Converts an incoming ISO string / Date into local "HH:mm" (IST)
 const toInputTimeString = (timeVal) => {
   if (!timeVal) return "";
+
+  // If it's already "HH:mm", return as-is
   if (
     typeof timeVal === "string" &&
     /^([01]\d|2[0-3]):([0-5]\d)$/.test(timeVal)
   ) {
     return timeVal;
   }
+
   const date = new Date(timeVal);
   if (isNaN(date.getTime())) return "";
-  const hours = String(date.getUTCHours()).padStart(2, "0");
-  const minutes = String(date.getUTCMinutes()).padStart(2, "0");
+
+  // USE LOCAL HOURS & MINUTES (Automatically resolves to IST)
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
   return `${hours}:${minutes}`;
 };
 
-// Converts "HH:mm" from <input type="time"/> to an ISO UTC timestamp
+// Converts the input's local "HH:mm" (IST) into an ISO UTC string for MongoDB/API
 const toIsoDateTime = (timeStr) => {
   if (!timeStr) return null;
   const [hours, minutes] = timeStr.split(":").map(Number);
+
+  // Set hours in LOCAL time, toISOString() will convert it to UTC correctly
   const date = new Date();
   date.setHours(hours, minutes, 0, 0);
   return date.toISOString();

@@ -37,7 +37,7 @@ const RouteDetails = () => {
       setScheduleError("");
       const response = await getSchedulesByRoute(id);
       const schedule = response.data?.data || [];
-      setAssignedSchedules(schedule.slice(0, 3));
+      setAssignedSchedules(schedule);
     } catch (err) {
       setScheduleError(
         err.response?.data?.message || "Failed to get bus schedules",
@@ -107,7 +107,6 @@ const RouteDetails = () => {
     }
   };
 
-  // Support both string primitives and populated object references
   const sourceName =
     typeof route?.source === "object"
       ? route?.source?.name || "-"
@@ -149,21 +148,21 @@ const RouteDetails = () => {
 
       {/* Page Title & Identifier */}
       <div className="flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-orange-500/10 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-orange-500/10 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400">
           <RouteIcon size={22} />
         </div>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+        <div className="min-w-0">
+          <h1 className="truncate text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
             {route?.routeName || "Route Details"}
           </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-300">
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
             Route corridor and assigned schedule breakdown
           </p>
         </div>
       </div>
 
       {/* Route Information Card */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs transition-colors duration-200 dark:border-slate-800 dark:bg-slate-900 sm:p-8">
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs transition-colors duration-200 dark:border-slate-800 dark:bg-slate-900 sm:p-6">
         <h2 className="mb-4 text-base font-semibold text-slate-900 dark:text-white">
           Route Information
         </h2>
@@ -171,7 +170,7 @@ const RouteDetails = () => {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {/* Route Name */}
           <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4 dark:border-slate-800/60 dark:bg-slate-950/50">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-300">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               Route Name
             </span>
             <p className="mt-1 font-semibold text-slate-900 dark:text-white">
@@ -181,9 +180,9 @@ const RouteDetails = () => {
 
           {/* Source */}
           <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4 dark:border-slate-800/60 dark:bg-slate-950/50">
-            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-300">
+            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               <MapPin size={14} className="text-emerald-500" />
-              <span>Source </span>
+              <span>Source</span>
             </div>
             <p className="mt-1 font-semibold text-slate-900 dark:text-white">
               {sourceName}
@@ -192,7 +191,7 @@ const RouteDetails = () => {
 
           {/* Destination */}
           <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4 dark:border-slate-800/60 dark:bg-slate-950/50">
-            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-300">
+            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               <MapPin size={14} className="text-orange-500" />
               <span>Destination</span>
             </div>
@@ -204,13 +203,13 @@ const RouteDetails = () => {
       </div>
 
       {/* Assigned Schedules Section */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs transition-colors duration-200 dark:border-slate-800 dark:bg-slate-900 sm:p-8">
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs transition-colors duration-200 dark:border-slate-800 dark:bg-slate-900 sm:p-6">
         <div className="mb-4 flex items-center justify-between">
           <div>
             <h2 className="text-base font-semibold text-slate-900 dark:text-white">
               Assigned Bus Schedules
             </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-300">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Buses running on this transit line
             </p>
           </div>
@@ -240,63 +239,117 @@ const RouteDetails = () => {
 
         {!scheduleLoading && !scheduleError && assignedSchedules.length > 0 && (
           <div className="overflow-hidden rounded-xl border border-slate-200/80 dark:border-slate-800">
-            <table className="w-full text-left text-sm text-slate-700 dark:text-slate-200">
-              <thead className="border-b border-slate-200/80 bg-slate-50/75 text-xs font-semibold uppercase tracking-wider text-slate-600 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-200">
-                <tr>
-                  <th scope="col" className="px-5 py-3.5">
-                    Bus Registration
-                  </th>
-                  <th scope="col" className="px-5 py-3.5">
-                    Bus Type
-                  </th>
-                  <th scope="col" className="px-5 py-3.5">
-                    Departure
-                  </th>
-                  <th scope="col" className="px-5 py-3.5">
-                    Arrival
-                  </th>
-                </tr>
-              </thead>
+            {/* Mobile Cards (sm:hidden) */}
+            <div className="divide-y divide-slate-200/80 dark:divide-slate-800 sm:hidden">
+              {assignedSchedules.slice(0, 3).map((schedule) => (
+                <div
+                  key={schedule._id}
+                  className="space-y-2.5 p-4 transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/40"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      Bus
+                    </span>
+                    <div className="flex items-center gap-1.5 text-right font-semibold text-slate-900 dark:text-white">
+                      <BusIcon size={14} className="text-orange-500 shrink-0" />
+                      <span>{schedule?.busId?.busRegNumber || "-"}</span>
+                    </div>
+                  </div>
 
-              <tbody className="divide-y divide-slate-200/80 dark:divide-slate-800">
-                {assignedSchedules.map((schedule) => (
-                  <tr
-                    key={schedule._id}
-                    className="transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/40"
-                  >
-                    <td className="px-5 py-4 font-semibold text-slate-900 dark:text-white">
-                      <div className="flex items-center gap-2">
-                        <BusIcon
-                          size={16}
-                          className="text-orange-500 shrink-0"
-                        />
-                        <span>{schedule?.busId?.busRegNumber || "-"}</span>
-                      </div>
-                    </td>
+                  <div className="flex items-center justify-between border-t border-slate-100 pt-2 dark:border-slate-800/50">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      Type
+                    </span>
+                    <span className="rounded-lg bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                      {schedule?.busId?.busType?.busType || "-"}
+                    </span>
+                  </div>
 
-                    <td className="px-5 py-4 text-slate-800 dark:text-slate-200">
-                      <span className="rounded-lg bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                        {schedule?.busId?.busType?.busType || "-"}
-                      </span>
-                    </td>
+                  <div className="flex items-center justify-between border-t border-slate-100 pt-2 dark:border-slate-800/50">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      Departure
+                    </span>
+                    <FormattedTime
+                      value={schedule.departureTime}
+                      fallback="-"
+                      className="text-xs font-medium text-slate-800 dark:text-slate-200"
+                    />
+                  </div>
 
-                    <td className="px-5 py-4 font-medium text-slate-800 dark:text-slate-200">
-                      <FormattedTime
-                        value={schedule.departureTime}
-                        fallback="-"
-                      />
-                    </td>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      Arrival
+                    </span>
+                    <FormattedTime
+                      value={schedule.arrivalTime}
+                      fallback="-"
+                      className="text-xs font-medium text-slate-800 dark:text-slate-200"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
 
-                    <td className="px-5 py-4 font-medium text-slate-800 dark:text-slate-200">
-                      <FormattedTime
-                        value={schedule.arrivalTime}
-                        fallback="-"
-                      />
-                    </td>
+            {/* Tablet & Desktop Table (hidden sm:block) */}
+            <div className="hidden sm:block overflow-x-auto">
+              <table className="w-full text-left text-sm text-slate-700 dark:text-slate-200">
+                <thead className="border-b border-slate-200/80 bg-slate-50/75 text-xs font-semibold uppercase tracking-wider text-slate-600 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-300">
+                  <tr>
+                    <th scope="col" className="px-5 py-3.5 whitespace-nowrap">
+                      Bus Registration
+                    </th>
+                    <th scope="col" className="px-5 py-3.5 whitespace-nowrap">
+                      Bus Type
+                    </th>
+                    <th scope="col" className="px-5 py-3.5 whitespace-nowrap">
+                      Departure
+                    </th>
+                    <th scope="col" className="px-5 py-3.5 whitespace-nowrap">
+                      Arrival
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+
+                <tbody className="divide-y divide-slate-200/80 dark:divide-slate-800">
+                  {assignedSchedules.slice(0, 3).map((schedule) => (
+                    <tr
+                      key={schedule._id}
+                      className="transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/40"
+                    >
+                      <td className="px-5 py-4 font-semibold text-slate-900 dark:text-white whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          <BusIcon
+                            size={16}
+                            className="text-orange-500 shrink-0"
+                          />
+                          <span>{schedule?.busId?.busRegNumber || "-"}</span>
+                        </div>
+                      </td>
+
+                      <td className="px-5 py-4 text-slate-800 dark:text-slate-200 whitespace-nowrap">
+                        <span className="rounded-lg bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                          {schedule?.busId?.busType?.busType || "-"}
+                        </span>
+                      </td>
+
+                      <td className="px-5 py-4 font-medium text-slate-800 dark:text-slate-200 whitespace-nowrap">
+                        <FormattedTime
+                          value={schedule.departureTime}
+                          fallback="-"
+                        />
+                      </td>
+
+                      <td className="px-5 py-4 font-medium text-slate-800 dark:text-slate-200 whitespace-nowrap">
+                        <FormattedTime
+                          value={schedule.arrivalTime}
+                          fallback="-"
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>
