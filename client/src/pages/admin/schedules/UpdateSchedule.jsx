@@ -3,7 +3,7 @@ import { Controller, useForm } from "react-hook-form";
 import { useNavigate, useParams } from "react-router-dom";
 import updateScheduleSchema from "../../../validations/schedule/updateScheduleSchema";
 import { useEffect, useState } from "react";
-import { getScheduleById, updateSchedule, getCandidateStopsByRoute } from "../../../services/scheduleService";
+import { getScheduleById, updateSchedule, getCandidateStopsByRoute, getRouteGeometryByStops } from "../../../services/scheduleService";
 import { getAllBuses } from "../../../services/busService";
 import { getAllRoutes } from "../../../services/routeService";
 import Loading from "../../../components/common/Loading";
@@ -308,6 +308,13 @@ const UpdateSchedule = () => {
     try {
       setUpdating(true);
 
+      const stopIds = data.stops.map(
+        (stop) => stop.stopId
+      );
+
+      const routeResponse =
+        await getRouteGeometryByStops(stopIds);
+
       const payload = {
         ...data,
         departureTime: toIsoDateTime(data.departureTime),
@@ -316,6 +323,8 @@ const UpdateSchedule = () => {
           ...stop,
           expectedArrivalTime: toIsoDateTime(stop.expectedArrivalTime),
         })),
+        routeGeometry:
+          routeResponse.data.data.geometry,
       };
 
       let response = await updateSchedule(id, payload);
