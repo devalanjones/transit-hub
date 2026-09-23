@@ -234,7 +234,7 @@ const BusDetails = () => {
           <EmptyState
             title="Bus Inactive"
             message="This bus is currently inactive. No scheduled routes are operating."
-            icon={CalendarDays}
+            icon="🗓️"
           />
         ) : (
           <>
@@ -252,7 +252,7 @@ const BusDetails = () => {
                 <EmptyState
                   title="No Schedules Found"
                   message="There are no route schedules currently assigned to this bus."
-                  icon={CalendarDays}
+                  icon="🗓️"
                 />
               )}
 
