@@ -7,6 +7,7 @@ import {
   Edit3,
   Trash2,
   CalendarDays,
+  Bus,
   Bus as BusIcon,
 } from "lucide-react";
 
@@ -191,16 +192,14 @@ const BusDetails = () => {
             </span>
             <div className="mt-1.5 flex items-center gap-2">
               <span
-                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                  bus.status === "active"
+                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${bus.status === "active"
                     ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"
                     : "bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400"
-                }`}
+                  }`}
               >
                 <span
-                  className={`h-1.5 w-1.5 rounded-full ${
-                    bus.status === "active" ? "bg-emerald-500" : "bg-rose-500"
-                  }`}
+                  className={`h-1.5 w-1.5 rounded-full ${bus.status === "active" ? "bg-emerald-500" : "bg-rose-500"
+                    }`}
                 />
                 {bus.status
                   ? bus.status.charAt(0).toUpperCase() + bus.status.slice(1)
@@ -234,7 +233,7 @@ const BusDetails = () => {
           <EmptyState
             title="Bus Inactive"
             message="This bus is currently inactive. No scheduled routes are operating."
-            icon={CalendarDays}
+            icon={Bus}
           />
         ) : (
           <>
@@ -252,7 +251,7 @@ const BusDetails = () => {
                 <EmptyState
                   title="No Schedules Found"
                   message="There are no route schedules currently assigned to this bus."
-                  icon={CalendarDays}
+                  icon={Bus}
                 />
               )}
 
