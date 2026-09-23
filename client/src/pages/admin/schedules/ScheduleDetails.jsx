@@ -220,16 +220,14 @@ const ScheduleDetails = () => {
             </span>
             <div className="mt-1.5 flex items-center">
               <span
-                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                  bus?.status === "active"
+                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${bus?.status === "active"
                     ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"
                     : "bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400"
-                }`}
+                  }`}
               >
                 <span
-                  className={`h-1.5 w-1.5 rounded-full ${
-                    bus?.status === "active" ? "bg-emerald-500" : "bg-rose-500"
-                  }`}
+                  className={`h-1.5 w-1.5 rounded-full ${bus?.status === "active" ? "bg-emerald-500" : "bg-rose-500"
+                    }`}
                 />
                 {bus?.status
                   ? bus.status.charAt(0).toUpperCase() + bus.status.slice(1)
@@ -257,14 +255,17 @@ const ScheduleDetails = () => {
         </div>
       </div>
 
-      {/* 3. Interactive Route Map Card */}
       <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs transition-colors duration-200 dark:border-slate-800 dark:bg-slate-900 sm:p-8">
         <h2 className="mb-4 flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-white">
           <MapPin size={18} className="text-orange-500" />
           <span>Route Map</span>
         </h2>
+
         <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800">
-          <ScheduleMap stops={sortedStops} />
+          <ScheduleMap
+            stops={sortedStops}
+            routeGeometry={schedule.routeGeometry}
+          />
         </div>
       </div>
 

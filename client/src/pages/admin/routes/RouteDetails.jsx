@@ -9,6 +9,7 @@ import {
   Route as RouteIcon,
   MapPin,
   CalendarDays,
+  Route,
   Bus as BusIcon,
 } from "lucide-react";
 
@@ -233,7 +234,7 @@ const RouteDetails = () => {
             <EmptyState
               title="No Assigned Schedules"
               message="There are no active bus schedules assigned to this route yet."
-              icon="🛣️" 
+              icon={Route}
             />
           )}
 
