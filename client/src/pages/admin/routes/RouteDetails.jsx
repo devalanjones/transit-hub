@@ -233,7 +233,7 @@ const RouteDetails = () => {
             <EmptyState
               title="No Assigned Schedules"
               message="There are no active bus schedules assigned to this route yet."
-              icon={CalendarDays}
+              icon="🛣️" 
             />
           )}
 
