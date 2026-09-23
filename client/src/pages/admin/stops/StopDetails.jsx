@@ -260,7 +260,7 @@ const StopDetails = () => {
             <EmptyState
               title="No Schedules Available"
               message="No buses are currently scheduled to arrive at this stop."
-              icon={CalendarDays}
+              icon="🚍"
             />
           )}
 

@@ -233,7 +233,7 @@ const BusDetails = () => {
           <EmptyState
             title="Bus Inactive"
             message="This bus is currently inactive. No scheduled routes are operating."
-            icon={Bus}
+            icon="🗓️"
           />
         ) : (
           <>
