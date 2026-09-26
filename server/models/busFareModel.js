@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const busTypeSchema = new mongoose.Schema(
+const busFareSchema = new mongoose.Schema(
   {
     busType: {
       type: String,
@@ -21,4 +21,4 @@ const busTypeSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model("busType", busTypeSchema);
+module.exports = mongoose.model("busFare", busFareSchema);
