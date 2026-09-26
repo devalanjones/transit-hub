@@ -23,16 +23,15 @@ const Select = forwardRef(
           ref={ref}
           id={id}
           name={name}
-          value={value}
+          defaultValue={value ?? ""}
           onChange={onChange}
           disabled={disabled}
           className={`w-full appearance-none rounded-xl border bg-white py-2.5 pl-4 pr-10 text-sm text-slate-800 shadow-xs transition-all duration-200 outline-none
             
             /* Border & Orange Focus states */
-            ${
-              error
-                ? "border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-500/15"
-                : "border-slate-300 hover:border-slate-400 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/15"
+            ${error
+              ? "border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-500/15"
+              : "border-slate-300 hover:border-slate-400 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/15"
             }
 
             /* Dark mode styling */

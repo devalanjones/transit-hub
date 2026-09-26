@@ -65,7 +65,27 @@ const getRouteById = async (id) => {
 };
 
 const updateRoute = async (id, data) => {
-  return await Route.findByIdAndUpdate(id, data, {
+  const sourceCoordinates = await getCoordinates(data.source);
+
+  const destinationCoordinates = await getCoordinates(data.destination);
+
+  const routeData = {
+    routeName: data.routeName,
+
+    source: {
+      name: data.source,
+      latitude: sourceCoordinates.latitude,
+      longitude: sourceCoordinates.longitude,
+    },
+
+    destination: {
+      name: data.destination,
+      latitude: destinationCoordinates.latitude,
+      longitude: destinationCoordinates.longitude,
+    },
+  };
+
+  return await Route.findByIdAndUpdate(id, routeData, {
     returnDocument: "after",
     runValidators: true,
   });

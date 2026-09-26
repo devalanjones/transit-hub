@@ -434,6 +434,15 @@ const UpdateSchedule = () => {
               </h3>
 
               <Select
+                key={stops
+                  .filter(
+                    (stop) =>
+                      !selectedStops.some(
+                        (selectedStop) => selectedStop._id === stop._id,
+                      ),
+                  )
+                  .map((stop) => stop._id)
+                  .join("-")}
                 id="stopId"
                 placeholder="Select Stop"
                 options={stops
