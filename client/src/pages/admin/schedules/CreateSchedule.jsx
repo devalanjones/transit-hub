@@ -32,6 +32,8 @@ const CreateSchedule = () => {
   } = useForm({
     resolver: yupResolver(createScheduleSchema),
     defaultValues: {
+      busId: "",
+      routeId: "",
       stops: [],
       days: [],
       status: "",
@@ -335,6 +337,7 @@ const CreateSchedule = () => {
               </h3>
 
               <Select
+                key={availableStopOptions.map((stop) => stop.value).join("-")}
                 id="stopId"
                 value=""
                 placeholder="Select Stop"
