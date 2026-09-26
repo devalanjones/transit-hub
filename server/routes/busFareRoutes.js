@@ -1,6 +1,6 @@
 const express = require("express")
-const { validateFareQuery, validateIdParam, validateCalculateFare, validateUpdateFare, validateCreateBusType } = require("../middleware/validateBusType")
-const { estimateFare, getAllFares, getFareById, calculateFare, updateFare, createBusType } = require("../controllers/busTypeController")
+const { validateFareQuery, validateIdParam, validateCalculateFare, validateUpdateFare, validateCreateBusType } = require("../middleware/validateBusFare")
+const { estimateFare, getAllFares, getFareById, calculateFare, updateFare, createBusType } = require("../controllers/busFareController")
 const router = express.Router()
 
 router.get("/", getAllFares)
