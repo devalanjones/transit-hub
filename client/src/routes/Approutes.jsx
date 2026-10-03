@@ -1,6 +1,5 @@
 import { Routes, Route } from "react-router-dom"
 import Dashboard from "../pages/admin/Dashboard";
-// import Home from "../pages/user/Home";
 import ProtectedRoute from "../components/auth/ProtectedRoute";
 import AdminLayout from "../components/admin/AdminLayout";
 import BusList from "../pages/admin/buses/BusList";
@@ -20,6 +19,8 @@ import ScheduleDetails from "../pages/admin/schedules/ScheduleDetails";
 import CreateSchedule from "../pages/admin/schedules/CreateSchedule";
 import UpdateSchedule from "../pages/admin/schedules/UpdateSchedule";
 import UserList from "../pages/admin/user/UserList";
+import UserLayout from "../components/users/UserLayout";
+import Home from "../pages/user/Home";
 
 
 const AppRoutes = () => {
@@ -71,6 +72,12 @@ const AppRoutes = () => {
             </Route>
 
             {/* <Route path="/home" element={<ProtectedRoute allowedRole="user"> <Home /> </ProtectedRoute>} /> */}
+
+            <Route path={"/user"} element={<UserLayout />}>
+
+                <Route path={"home"} element={<Home />} />
+
+            </Route>
 
 
         </Routes>
