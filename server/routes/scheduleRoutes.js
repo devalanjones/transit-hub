@@ -1,5 +1,5 @@
 const express = require("express");
-const { validateSchedule, validateUpdateSchedule } = require("../middleware/validateSchedule");
+const { validateSchedule, validateUpdateSchedule } = require("../middlewares/validateSchedule");
 const { createSchedule, getAllSchedules, getScheduleById, updateSchedule, deleteSchedule, getAssignedSchedulesByBus, getSchedulesByRoute, getSchedulesByStop, getCandidateStopsByRoute, getRouteGeometryByStops } = require("../controllers/scheduleController");
 const router = express.Router()
 

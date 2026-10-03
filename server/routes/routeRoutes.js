@@ -2,7 +2,7 @@ let express = require("express");
 const {
   validateRoute,
   validateUpdateRoute,
-} = require("../middleware/validateRoute");
+} = require("../middlewares/validateRoute");
 const {
   createRoute,
   getAllRoutes,

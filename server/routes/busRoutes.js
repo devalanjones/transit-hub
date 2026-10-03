@@ -1,5 +1,5 @@
 let express = require("express");
-const { validateBus, validateUpdateBus } = require("../middleware/validateBus");
+const { validateBus, validateUpdateBus } = require("../middlewares/validateBus");
 const { createBus, updateBus, getAllBuses, getBusById, deleteBus } = require("../controllers/busController");
 const router = express.Router();
 
