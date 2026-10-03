@@ -1,9 +1,9 @@
-const BusType = require("../models/busTypeModel");
+const BusFare = require("../models/busFareModel");
 
 const createBusTypeService = async (data) => {
   const { busType, baseFare, farePerKm } = data;
 
-  const existingBusType = await BusType.findOne({
+  const existingBusType = await BusFare.findOne({
     busType: { $regex: new RegExp(`^${busType.trim()}$`, "i") },
   });
 
@@ -13,7 +13,7 @@ const createBusTypeService = async (data) => {
     throw error;
   }
 
-  const newFareRate = await BusType.create({
+  const newFareRate = await BusFare.create({
     busType: busType.trim(),
     baseFare,
     farePerKm,
@@ -27,7 +27,7 @@ const calculateFareService = async (
   distanceInKm,
   passengers = 1,
 ) => {
-  const bus = await BusType.findById(busTypeId);
+  const bus = await BusFare.findById(busTypeId);
   if (!bus) {
     const err = new Error("Bus type not found");
     err.statusCode = 404;
@@ -49,13 +49,13 @@ const calculateFareService = async (
 };
 
 const getAllFaresService = async () => {
-  return await BusType.find().select(
+  return await BusFare.find().select(
     "busType baseFare farePerKm createdAt updatedAt",
   );
 };
 
 const getFareByIdService = async (id) => {
-  const fare = await BusType.findById(id);
+  const fare = await BusFare.findById(id);
   if (!fare) {
     const err = new Error("Fare rate configuration not found");
     err.statusCode = 404;
@@ -65,7 +65,7 @@ const getFareByIdService = async (id) => {
 };
 
 const updateFareService = async (id, updateData) => {
-  const updatedFare = await BusType.findByIdAndUpdate(id, updateData, {
+  const updatedFare = await BusFare.findByIdAndUpdate(id, updateData, {
     new: true,
     runValidators: true,
   });

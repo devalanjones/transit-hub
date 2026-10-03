@@ -4,7 +4,7 @@ const {
   idParamSchema,
   updateFareSchema,
   createbusTypeSchema,
-} = require("../validations/busTypeValidation");
+} = require("../validations/busFareValidation");
 
 const validateCreateBusType = (req, res, next) => {
   const { error, value } = createbusTypeSchema.validate(req.body, {
