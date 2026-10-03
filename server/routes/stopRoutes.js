@@ -1,5 +1,5 @@
 const express = require("express")
-const validateStop = require("../middleware/validateStop")
+const validateStop = require("../middlewares/validateStop")
 const { createStop, updateStop, getAllStops, getStopById, deleteStop } = require("../controllers/stopController")
 const router = express.Router()
 

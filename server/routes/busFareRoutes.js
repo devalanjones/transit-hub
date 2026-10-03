@@ -1,5 +1,5 @@
 const express = require("express")
-const { validateFareQuery, validateIdParam, validateCalculateFare, validateUpdateFare, validateCreateBusType } = require("../middleware/validateBusFare")
+const { validateFareQuery, validateIdParam, validateCalculateFare, validateUpdateFare, validateCreateBusType } = require("../middlewares/validateBusFare")
 const { estimateFare, getAllFares, getFareById, calculateFare, updateFare, createBusType } = require("../controllers/busFareController")
 const router = express.Router()
 

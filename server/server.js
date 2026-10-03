@@ -15,13 +15,15 @@ let busRouter = require("./routes/busRoutes")
 let routeRouter = require("./routes/routeRoutes")
 let stopRouter = require("./routes/stopRoutes")
 let scheduleRouter = require("./routes/scheduleRoutes")
-let busTypeRouter = require("./routes/busTypeRoutes")
+let busFareRouter = require("./routes/busFareRoutes")
+let liveLocationRouter = require("./routes/liveLocationRoutes")
 
 app.use("/buses", busRouter)
 app.use("/routes", routeRouter)
 app.use("/stops", stopRouter)
 app.use("/schedules", scheduleRouter)
-app.use("/busType", busTypeRouter)
+app.use("/busFare", busFareRouter) 
+app.use("/liveLocation", liveLocationRouter) 
 
 const port = process.env.PORT
 
