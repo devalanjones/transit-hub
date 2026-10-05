@@ -18,6 +18,10 @@ const homeSchema = yup.object({
             "different-stops",
             "Starting stop and destination stop cannot be the same.",
             function (value) {
+                if (!value || !this.parent.from) {
+                    return true;
+                }
+                
                 return value !== this.parent.from;
             }
         ),
