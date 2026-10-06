@@ -75,7 +75,7 @@ const AppRoutes = () => {
 
             <Route path={"/user"} element={<UserLayout />}>
 
-                <Route path={"home"} element={<Home />} />
+                <Route path={""} element={<Home />} />
 
             </Route>
 
