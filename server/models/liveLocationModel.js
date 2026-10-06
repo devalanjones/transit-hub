@@ -8,7 +8,7 @@ const locationSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
-    schedule: {
+    scheduleId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Schedule",
       required: true,
@@ -56,6 +56,6 @@ const locationSchema = new mongoose.Schema(
 
 // Enable 2dsphere index for location queries and compound index for time-series lookup
 locationSchema.index({ location: "2dsphere" });
-locationSchema.index({ bus: 1, createdAt: -1 });
+locationSchema.index({ busId: 1, createdAt: -1 });
 
 module.exports = mongoose.model("Location", locationSchema);
