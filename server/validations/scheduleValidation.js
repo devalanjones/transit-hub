@@ -80,7 +80,24 @@ const updateScheduleValidationSchema = Joi.object({
   status: Joi.string().valid(...statusEnum),
 }).min(1);
 
+// Schema for searching scheduled buses
+const searchBusScheduleSchema = Joi.object({
+  from: objectId.required().messages({
+    "any.required": "'from' stop ID is required",
+    "string.empty": "'from' stop ID cannot be empty",
+  }),
+  to: objectId.invalid(Joi.ref("from")).required().messages({
+    "any.required": "'to' stop ID is required",
+    "string.empty": "'to' stop ID cannot be empty",
+    "any.invalid": "'from' and 'to' stops cannot be identical",
+  }),
+  date: dateFormat,
+  day: Joi.string().valid(...daysEnum),
+}).oxor("date", "day"); // ensures caller doesn't provide both conflicting values
+
 module.exports = {
+  daysEnum,
   scheduleValidationSchema,
   updateScheduleValidationSchema,
+  searchBusScheduleSchema,
 };

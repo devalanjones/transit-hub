@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const Schedule = require("../models/scheduleModel");
 const Route = require("../models/routeModel");
 const Stop = require("../models/stopModel");
@@ -12,10 +13,9 @@ const getDistanceFromSegment = (
   startLatitude,
   startLongitude,
   endLatitude,
-  endLongitude
+  endLongitude,
 ) => {
-
-  const latitude = pointLatitude * Math.PI / 180;
+  const latitude = (pointLatitude * Math.PI) / 180;
 
   const x = pointLongitude * Math.cos(latitude);
   const y = pointLatitude;
@@ -33,15 +33,10 @@ const getDistanceFromSegment = (
     const distanceX = x - startX;
     const distanceY = y - startY;
 
-    return Math.sqrt(
-      distanceX * distanceX +
-      distanceY * distanceY
-    ) * 111320;
+    return Math.sqrt(distanceX * distanceX + distanceY * distanceY) * 111320;
   }
 
-  let t =
-    ((x - startX) * dx + (y - startY) * dy) /
-    (dx * dx + dy * dy);
+  let t = ((x - startX) * dx + (y - startY) * dy) / (dx * dx + dy * dy);
 
   t = Math.max(0, Math.min(1, t));
 
@@ -51,14 +46,10 @@ const getDistanceFromSegment = (
   const distanceX = x - closestX;
   const distanceY = y - closestY;
 
-  return Math.sqrt(
-    distanceX * distanceX +
-    distanceY * distanceY
-  ) * 111320;
+  return Math.sqrt(distanceX * distanceX + distanceY * distanceY) * 111320;
 };
 
 const getCandidateStopsByRoute = async (routeId) => {
-
   const route = await Route.findById(routeId).lean();
 
   if (!route) {
@@ -86,38 +77,30 @@ const getCandidateStopsByRoute = async (routeId) => {
     `${sourceLongitude},${sourceLatitude};` +
     `${destinationLongitude},${destinationLatitude}`;
 
-  const { stdout: baseStdout } = await execFileAsync(
-    "curl",
-    [
-      "-s",
-      "--max-time",
-      "30",
-      "-G",
-      baseUrl,
-      "--data-urlencode",
-      "overview=false",
-    ]
-  );
+  const { stdout: baseStdout } = await execFileAsync("curl", [
+    "-s",
+    "--max-time",
+    "30",
+    "-G",
+    baseUrl,
+    "--data-urlencode",
+    "overview=false",
+  ]);
 
   const baseRouteData = JSON.parse(baseStdout);
 
-  if (
-    !baseRouteData.routes ||
-    baseRouteData.routes.length === 0
-  ) {
+  if (!baseRouteData.routes || baseRouteData.routes.length === 0) {
     const error = new Error("Road route not found");
     error.status = 404;
     throw error;
   }
 
-  const baseDistance =
-    baseRouteData.routes[0].distance;
+  const baseDistance = baseRouteData.routes[0].distance;
 
   const candidateStops = [];
 
   // Check every stop
   for (const stop of stops) {
-
     const stopUrl =
       `https://router.project-osrm.org/route/v1/driving/` +
       `${sourceLongitude},${sourceLatitude};` +
@@ -125,52 +108,37 @@ const getCandidateStopsByRoute = async (routeId) => {
       `${destinationLongitude},${destinationLatitude}`;
 
     try {
-
-      const { stdout } = await execFileAsync(
-        "curl",
-        [
-          "-s",
-          "--max-time",
-          "30",
-          "-G",
-          stopUrl,
-          "--data-urlencode",
-          "overview=false",
-        ]
-      );
+      const { stdout } = await execFileAsync("curl", [
+        "-s",
+        "--max-time",
+        "30",
+        "-G",
+        stopUrl,
+        "--data-urlencode",
+        "overview=false",
+      ]);
 
       const routeData = JSON.parse(stdout);
 
-      if (
-        !routeData.routes ||
-        routeData.routes.length === 0
-      ) {
+      if (!routeData.routes || routeData.routes.length === 0) {
         continue;
       }
 
-      const routeDistance =
-        routeData.routes[0].distance;
+      const routeDistance = routeData.routes[0].distance;
 
       // Allow routes up to 50% longer than the normal route
       if (routeDistance <= baseDistance * 1.5) {
-
         candidateStops.push(stop);
-
       }
-
     } catch (error) {
-
       continue;
-
     }
-
   }
 
   return candidateStops;
 };
 
 const getRouteGeometryByStops = async (stopIds) => {
-
   if (!stopIds || stopIds.length < 2) {
     const error = new Error("At least two stops are required");
     error.status = 400;
@@ -178,7 +146,7 @@ const getRouteGeometryByStops = async (stopIds) => {
   }
 
   const stops = await Stop.find({
-    _id: { $in: stopIds }
+    _id: { $in: stopIds },
   }).lean();
 
   if (stops.length !== stopIds.length) {
@@ -189,30 +157,26 @@ const getRouteGeometryByStops = async (stopIds) => {
 
   // Keep the same order selected by admin
   const orderedStops = stopIds.map((stopId) =>
-    stops.find((stop) => stop._id.toString() === stopId.toString())
+    stops.find((stop) => stop._id.toString() === stopId.toString()),
   );
 
   const coordinates = orderedStops
     .map((stop) => `${stop.longitude},${stop.latitude}`)
     .join(";");
 
-  const osrmUrl =
-    `https://router.project-osrm.org/route/v1/driving/${coordinates}`;
+  const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${coordinates}`;
 
-  const { stdout } = await execFileAsync(
-    "curl",
-    [
-      "-s",
-      "--max-time",
-      "30",
-      "-G",
-      osrmUrl,
-      "--data-urlencode",
-      "overview=full",
-      "--data-urlencode",
-      "geometries=geojson",
-    ]
-  );
+  const { stdout } = await execFileAsync("curl", [
+    "-s",
+    "--max-time",
+    "30",
+    "-G",
+    osrmUrl,
+    "--data-urlencode",
+    "overview=full",
+    "--data-urlencode",
+    "geometries=geojson",
+  ]);
 
   const routeData = JSON.parse(stdout);
 
@@ -230,8 +194,8 @@ const getRouteGeometryByStops = async (stopIds) => {
 };
 
 const createSchedule = async (data) => {
-  return await Schedule.create(data)
-}
+  return await Schedule.create(data);
+};
 const getAllSchedules = async () => {
   return await Schedule.find()
     .populate("busId")
@@ -245,8 +209,8 @@ const getScheduleById = async (id) => {
     .populate({
       path: "busId",
       populate: {
-        path: "busType"
-      }
+        path: "busType",
+      },
     })
     .populate("routeId")
     .populate("stops.stopId")
@@ -262,11 +226,10 @@ const getScheduleById = async (id) => {
 };
 
 const getAssignedSchedulesByBus = async (busId) => {
-
   const now = new Date();
 
   const currentDay = now.toLocaleDateString("en-US", {
-    weekday: "long"
+    weekday: "long",
   });
 
   const currentTime = now.toTimeString().slice(0, 5);
@@ -277,51 +240,47 @@ const getAssignedSchedulesByBus = async (busId) => {
     .populate("routeId", "routeName startLocation endLocation")
     .populate("stops.stopId", "stopName location")
     .sort({
-      departureTime: 1
+      departureTime: 1,
     });
 
   return schedules;
-
 };
 
 const getSchedulesByRoute = async (routeId) => {
-
   const schedules = await Schedule.find({
-    routeId
+    routeId,
   })
     .populate({
       path: "busId",
       populate: {
-        path: "busType"
-      }
+        path: "busType",
+      },
     })
     .populate("routeId")
     .sort({
-      departureTime: 1
+      departureTime: 1,
     });
 
   return schedules;
 };
 
 const getSchedulesByStop = async (stopId) => {
-
   const schedules = await Schedule.find({
-    "stops.stopId": stopId
+    "stops.stopId": stopId,
   })
     .populate({
       path: "busId",
       populate: {
-        path: "busType"
-      }
+        path: "busType",
+      },
     })
     .populate("routeId")
     .populate("stops.stopId")
     .sort({
-      departureTime: 1
+      departureTime: 1,
     });
 
   return schedules;
-
 };
 
 const updateSchedule = async (id, data) => {
@@ -351,6 +310,85 @@ const deleteSchedule = async (id) => {
   return deletedSchedule;
 };
 
+const searchSchedulesBetweenStops = async ({ from, to, day }) => {
+  const fromObjectId = new mongoose.Types.ObjectId(from);
+  const toObjectId = new mongoose.Types.ObjectId(to);
+
+  const query = {
+    status: { $ne: "CANCELLED" },
+    "stops.stopId": { $all: [fromObjectId, toObjectId] },
+  };
+
+  if (day) {
+    query.days = day;
+  }
+
+  // 1. Fetch matching schedules using the exact populate patterns from your service
+  const schedules = await Schedule.find(query)
+    .populate({
+      path: "busId",
+      populate: {
+        path: "busType",
+      },
+    })
+    .populate("routeId")
+    .populate("stops.stopId")
+    .sort({ departureTime: 1 })
+    .lean();
+
+  // 2. Filter for sequence order (from must come before to) and format response
+  const results = [];
+
+  for (const schedule of schedules) {
+    // Find the matching stops in the populated schedule
+    const originStop = schedule.stops.find(
+      (s) => s.stopId && s.stopId._id.toString() === from.toString(),
+    );
+    const destStop = schedule.stops.find(
+      (s) => s.stopId && s.stopId._id.toString() === to.toString(),
+    );
+
+    // Ensure both stops exist and origin sequence comes before destination sequence
+    if (
+      originStop &&
+      destStop &&
+      originStop.stopSequence < destStop.stopSequence
+    ) {
+      results.push({
+        _id: schedule._id,
+        status: schedule.status,
+        days: schedule.days,
+        bus: schedule.busId,
+        route: schedule.routeId,
+        departureTime: schedule.departureTime,
+        arrivalTime: schedule.arrivalTime,
+        tripSegment: {
+          origin: {
+            stop: originStop.stopId,
+            stopSequence: originStop.stopSequence,
+            expectedArrivalTime: originStop.expectedArrivalTime,
+          },
+          destination: {
+            stop: destStop.stopId,
+            stopSequence: destStop.stopSequence,
+            expectedArrivalTime: destStop.expectedArrivalTime,
+          },
+        },
+        routeGeometry: schedule.routeGeometry,
+      });
+    }
+  }
+
+  // Sort by expected arrival time at the pickup stop
+  results.sort(
+    (a, b) =>
+      new Date(a.tripSegment.origin.expectedArrivalTime) -
+      new Date(b.tripSegment.origin.expectedArrivalTime),
+  );
+
+  return results;
+};
+
 module.exports = {
   createSchedule,
   getAllSchedules,
@@ -362,4 +400,5 @@ module.exports = {
   getRouteGeometryByStops,
   updateSchedule,
   deleteSchedule,
+  searchSchedulesBetweenStops,
 };

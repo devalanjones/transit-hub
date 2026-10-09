@@ -89,141 +89,97 @@ let deleteSchedule = async (req, res) => {
 };
 
 let getAssignedSchedulesByBus = async (req, res) => {
-
   try {
-
     const { busId } = req.params;
 
     const assignedSchedules =
       await scheduleService.getAssignedSchedulesByBus(busId);
 
     return res.status(200).json({
-
       success: true,
 
       count: assignedSchedules.length,
 
       data: assignedSchedules,
-
     });
-
   } catch (error) {
-
     return res.status(500).json({
-
       success: false,
 
-      message: error.message
-
+      message: error.message,
     });
-
   }
-
 };
 
 let getSchedulesByRoute = async (req, res) => {
-
   try {
-
     const { routeId } = req.params;
 
-    const schedules =
-      await scheduleService.getSchedulesByRoute(routeId);
+    const schedules = await scheduleService.getSchedulesByRoute(routeId);
 
     return res.status(200).json({
-
       success: true,
 
       count: schedules.length,
 
-      data: schedules
-
+      data: schedules,
     });
-
   } catch (error) {
-
     return res.status(500).json({
-
       success: false,
 
-      message: error.message
-
+      message: error.message,
     });
-
   }
-
 };
 
 let getCandidateStopsByRoute = async (req, res) => {
-
   try {
-
     const { routeId } = req.params;
 
     const candidateStops =
       await scheduleService.getCandidateStopsByRoute(routeId);
 
     return res.status(200).json({
-
       success: true,
 
       count: candidateStops.length,
 
       data: candidateStops,
-
     });
-
   } catch (error) {
-
     return res.status(error.status || 500).json({
-
       success: false,
 
       message: error.message,
-
     });
-
   }
-
 };
 
 let getSchedulesByStop = async (req, res) => {
-
   try {
-
     const { stopId } = req.params;
 
-    const schedules =
-      await scheduleService.getSchedulesByStop(stopId);
+    const schedules = await scheduleService.getSchedulesByStop(stopId);
 
     return res.status(200).json({
-
       success: true,
 
       count: schedules.length,
 
-      data: schedules
-
+      data: schedules,
     });
-
   } catch (error) {
-
     return res.status(500).json({
-
       success: false,
 
-      message: error.message
-
+      message: error.message,
     });
-
   }
-
 };
 
 let getRouteGeometryByStops = async (req, res) => {
-
   try {
-
     const { stopIds } = req.body;
 
     const routeGeometry =
@@ -233,16 +189,37 @@ let getRouteGeometryByStops = async (req, res) => {
       success: true,
       data: routeGeometry,
     });
-
   } catch (error) {
-
     return res.status(error.status || 500).json({
       success: false,
       message: error.message,
     });
-
   }
+};
 
+const searchSchedules = async (req, res) => {
+  try {
+    const { from, to, day } = req.searchFilters;
+
+    const schedules = await scheduleService.searchSchedulesBetweenStops({
+      from,
+      to,
+      day,
+    });
+
+    return res.status(200).json({
+      success: true,
+      count: schedules.length,
+      data: schedules,
+    });
+  } catch (error) {
+    console.error("Error searching schedules:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error while searching schedules",
+      error: error.message,
+    });
+  }
 };
 
 module.exports = {
@@ -256,4 +233,5 @@ module.exports = {
   getSchedulesByStop,
   getCandidateStopsByRoute,
   getRouteGeometryByStops,
+  searchSchedules,
 };
