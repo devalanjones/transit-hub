@@ -2,10 +2,8 @@ const express = require("express");
 const {
   validateSchedule,
   validateUpdateSchedule,
+  validateSearchSchedule,
 } = require("../middlewares/validateSchedule");
-const {
-  validateSearchScheduledBuses,
-} = require("../middlewares/validateScheduleSearch");
 
 const {
   createSchedule,
@@ -24,7 +22,7 @@ const {
 const router = express.Router();
 
 // Specific query and sub-resource routes
-router.get("/search", validateSearchScheduledBuses, searchSchedules);
+router.get("/search", validateSearchSchedule, searchSchedules);
 router.get("/:busId/assigned-schedules", getAssignedSchedulesByBus);
 router.get("/route/:routeId/schedules", getSchedulesByRoute);
 router.get("/route/:routeId/candidate-stops", getCandidateStopsByRoute);
