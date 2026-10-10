@@ -1,42 +1,35 @@
-const { scheduleValidationSchema, updateScheduleValidationSchema } = require("../validations/scheduleValidation")
+const {
+  scheduleValidationSchema,
+  updateScheduleValidationSchema,
+  searchBusScheduleSchema,
+} = require("../validations/scheduleValidation");
 
-const validateSchedule = (req, res, next) => {
-    const { error, value } = scheduleValidationSchema.validate(req.body, {
-        abortEarly: false,
-        stripUnknown: true,
-    })
-
-    if (error) {
-        return res.status(400).json({
-            success: false,
-            errors: error.details.map((e) => e.message)
-        })
-    }
-
-    req.body = value
-
-    next()
-}
-
-const validateUpdateSchedule = (req, res, next) => {
-    const { error, value } = updateScheduleValidationSchema.validate(req.body, {
-        abortEarly: false,
-        stripUnknown: true,
-    })
+/**
+ * Higher-order middleware factory for Joi validation
+ * @param {Joi.Schema} schema - The Joi schema to validate against
+ * @param {'body' | 'query' | 'params'} [source='body'] - Request property to validate
+ */
+const validate =
+  (schema, source = "body") =>
+  (req, res, next) => {
+    const { error, value } = schema.validate(req[source], {
+      abortEarly: false,
+      stripUnknown: true,
+    });
 
     if (error) {
-        return res.status(400).json({
-            success: false,
-            errors: error.details.map((e) => e.message)
-        })
+      return res.status(400).json({
+        success: false,
+        errors: error.details.map((detail) => detail.message),
+      });
     }
 
-    req.body = value
-
-    next()
-}
+    req[source] = value;
+    next();
+  };
 
 module.exports = {
-    validateSchedule,
-    validateUpdateSchedule
-}
+  validateSchedule: validate(scheduleValidationSchema, "body"),
+  validateUpdateSchedule: validate(updateScheduleValidationSchema, "body"),
+  validateSearchSchedule: validate(searchBusScheduleSchema, "query"),
+};
