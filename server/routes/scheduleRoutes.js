@@ -4,7 +4,7 @@ const {
   validateUpdateSchedule,
 } = require("../middlewares/validateSchedule");
 const {
-  validateSearchScheduledBuses,
+  validateSearchScheduledBuses
 } = require("../middlewares/validateScheduleSearch");
 
 const {

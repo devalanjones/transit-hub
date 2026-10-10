@@ -57,3 +57,13 @@ export const getRouteGeometryByStops = (stopIds) => {
     });
 
 };
+
+export const searchSchedules = async (from, to) => {
+
+    return await api.get("/schedules/search", {
+
+        params: { from, to }
+
+    });
+
+};

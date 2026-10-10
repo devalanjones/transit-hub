@@ -1,5 +1,5 @@
 import { yupResolver } from "@hookform/resolvers/yup";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import homeSchema from "../../validations/user/homeSchema";
@@ -7,6 +7,9 @@ import Input from "../../components/common/Input";
 import Button from "../../components/common/Button";
 import ErrorMessage from "../../components/common/ErrorMessage";
 import { ArrowDownUp, Bus, CircleDollarSign, LocateFixed, MapPin, Navigation, Search } from "lucide-react";
+import { getAllStops } from "../../services/stopService";
+import { getAllRoutes } from "../../services/routeService";
+
 
 
 
@@ -14,40 +17,28 @@ import { ArrowDownUp, Bus, CircleDollarSign, LocateFixed, MapPin, Navigation, Se
 const Home = () => {
 
     const navigate = useNavigate();
+    const [stops, setStops] = useState([]);
+    const [popularRoutes, setPopularRoutes] = useState([]);
+    const [apiError, setApiError] = useState("");
 
-    const stops = [
-        { _id: "1", stopName: "Thiruvananthapuram Central" },
-        { _id: "2", stopName: "Thampanoor" },
-        { _id: "3", stopName: "Kazhakoottam" },
-        { _id: "4", stopName: "Kollam" },
-        { _id: "5", stopName: "Attingal" },
-        { _id: "6", stopName: "Varkala" },
-        { _id: "7", stopName: "Kochi" },
-        { _id: "8", stopName: "Alappuzha" },
-    ];
+    useEffect(() => {
+        const fetchHomeData = async () => {
+            try {
+                const [stopsResponse, routeResponse] = await Promise.all([
+                    getAllStops(),
+                    getAllRoutes(),
+                ]);
 
-    const popularRoutes = [
-        {
-            id: "1",
-            source: "Thiruvananthapuram",
-            destination: "Kollam",
-        },
-        {
-            id: "2",
-            source: "Thiruvananthapuram",
-            destination: "Kochi",
-        },
-        {
-            id: "3",
-            source: "Kollam",
-            destination: "Alappuzha",
-        },
-        {
-            id: "4",
-            source: "Thiruvananthapuram",
-            destination: "Attingal",
-        },
-    ];
+                setStops(stopsResponse.data.data || []);
+                setPopularRoutes((routeResponse.data.data || []).slice(0, 4));
+                setApiError("");
+            } catch (error) {
+                setApiError(error.response?.data?.message || "Error fetching home page data.");
+            }
+        };
+
+        fetchHomeData();
+    }, []);
 
     const [showFromSuggestions, setShowFromSuggestions] = useState(false);
     const [showToSuggestions, setShowToSuggestions] = useState(false);
@@ -174,6 +165,10 @@ const Home = () => {
     return (
 
         <div className="space-y-8">
+
+            {apiError && (
+                <ErrorMessage message={apiError} />
+            )}
 
             {/* Hero Section */}
             <section className="relative overflow-hidden rounded-2xl bg-[url('/images/bus-hero.jpg')] bg-cover bg-center px-6 py-10 text-white sm:px-10">
@@ -413,13 +408,13 @@ const Home = () => {
 
                                 <div className="min-w-0">
                                     <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                                        {route.source}
+                                        {route.source?.name}
                                     </p>
 
                                     <div className="my-1 h-px w-8 bg-gray-300 dark:bg-gray-700" />
 
                                     <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                                        {route.destination}
+                                        {route.destination?.name}
                                     </p>
                                 </div>
                             </div>
