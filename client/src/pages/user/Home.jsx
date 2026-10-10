@@ -19,6 +19,7 @@ const Home = () => {
     const navigate = useNavigate();
     const [stops, setStops] = useState([]);
     const [popularRoutes, setPopularRoutes] = useState([]);
+    const [allRoutes, setAllRoutes] = useState([]);
     const [apiError, setApiError] = useState("");
 
     useEffect(() => {
@@ -29,8 +30,11 @@ const Home = () => {
                     getAllRoutes(),
                 ]);
 
+                const routes = routeResponse.data.data || [];
+
                 setStops(stopsResponse.data.data || []);
-                setPopularRoutes((routeResponse.data.data || []).slice(0, 4));
+                setAllRoutes(routes);
+                setPopularRoutes(routes.slice(0, 4));
                 setApiError("");
             } catch (error) {
                 setApiError(error.response?.data?.message || "Error fetching home page data.");
@@ -63,13 +67,33 @@ const Home = () => {
     const from = watch("from");
     const to = watch("to");
 
-    const filteredFromStops = stops.filter((stop) =>
-        stop.stopName.toLowerCase().includes(from.toLowerCase())
+
+    const routeEndpointNames = allRoutes.flatMap((route) => [
+        route.source?.name,
+        route.destination?.name,
+    ]);
+
+    const availableLocations = [
+        ...new Set(
+            [
+                ...stops.map((stop) => stop.stopName),
+                ...routeEndpointNames,
+            ].filter((location) => typeof location === "string" && location.trim())
+        ),
+    ];
+
+    const filteredFromStops = availableLocations.filter((location) =>
+        location.toLowerCase().includes(
+            String(from ?? "").toLowerCase()
+        )
     );
 
-    const filteredToStops = stops.filter((stop) =>
-        stop.stopName.toLowerCase().includes(to.toLowerCase())
+    const filteredToStops = availableLocations.filter((location) =>
+        location.toLowerCase().includes(
+            String(to ?? "").toLowerCase()
+        )
     );
+
 
     const handleFromChange = (event) => {
         setValue("from", event.target.value, {
@@ -97,8 +121,9 @@ const Home = () => {
         setShowToSuggestions(true);
     };
 
-    const handleFromSelect = (stop) => {
-        setValue("from", stop.stopName, {
+
+    const handleFromSelect = (location) => {
+        setValue("from", location, {
             shouldValidate: true,
         });
 
@@ -107,12 +132,12 @@ const Home = () => {
         });
 
         setShowFromSuggestions(false);
-
         clearErrors(["from", "fromSelected", "to"]);
     };
 
-    const handleToSelect = (stop) => {
-        setValue("to", stop.stopName, {
+
+    const handleToSelect = (location) => {
+        setValue("to", location, {
             shouldValidate: true,
         });
 
@@ -121,8 +146,35 @@ const Home = () => {
         });
 
         setShowToSuggestions(false);
-
         clearErrors(["to", "toSelected"]);
+    };
+
+    const handlePopularRouteSelect = (route) => {
+        const fromLocation = route.source?.name;
+        const toLocation = route.destination?.name;
+
+        if (!fromLocation || !toLocation) return;
+
+        setValue("from", fromLocation, {
+            shouldValidate: true,
+        });
+
+        setValue("fromSelected", true, {
+            shouldValidate: true,
+        });
+
+        setValue("to", toLocation, {
+            shouldValidate: true,
+        });
+
+        setValue("toSelected", true, {
+            shouldValidate: true,
+        });
+
+        setShowFromSuggestions(false);
+        setShowToSuggestions(false);
+
+        clearErrors();
     };
 
     const handleSwap = () => {
@@ -239,11 +291,11 @@ const Home = () => {
                                 <div className="absolute left-0 right-0 top-full z-30 mt-2 max-h-48 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-[#202832]">
 
                                     {filteredFromStops.length > 0 ? (
-                                        filteredFromStops.map((stop) => (
+                                        filteredFromStops.map((location) => (
                                             <button
-                                                key={stop._id}
+                                                key={location}
                                                 type="button"
-                                                onClick={() => handleFromSelect(stop)}
+                                                onClick={() => handleFromSelect(location)}
                                                 className="flex w-full items-center gap-3 bg-blue-50 px-4 py-3 text-left text-sm text-gray-700 transition-colors hover:bg-blue-400 dark:bg-[#1b222c] dark:text-gray-200 dark:hover:bg-[#400d38]"
                                             >
                                                 <MapPin
@@ -251,7 +303,7 @@ const Home = () => {
                                                     className="shrink-0 text-green-600"
                                                 />
 
-                                                {stop.stopName}
+                                                {location}
                                             </button>
                                         ))
                                     ) : (
@@ -331,11 +383,11 @@ const Home = () => {
                                 <div className="absolute left-0 right-0 top-full z-30 mt-2 max-h-48 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-[#1b222c]">
 
                                     {filteredToStops.length > 0 ? (
-                                        filteredToStops.map((stop) => (
+                                        filteredToStops.map((location) => (
                                             <button
-                                                key={stop._id}
+                                                key={location}
                                                 type="button"
-                                                onClick={() => handleToSelect(stop)}
+                                                onClick={() => handleToSelect(location)}
                                                 className="flex w-full items-center gap-3 bg-blue-50 px-4 py-3 text-left text-sm text-gray-700 transition-colors hover:bg-blue-400 dark:bg-[#1b222c] dark:text-gray-200 dark:hover:bg-[#400d38]"
                                             >
                                                 <MapPin
@@ -343,7 +395,7 @@ const Home = () => {
                                                     className="shrink-0 text-green-600"
                                                 />
 
-                                                {stop.stopName}
+                                                {location}
                                             </button>
                                         ))
                                     ) : (
@@ -399,7 +451,16 @@ const Home = () => {
                     {popularRoutes.map((route) => (
                         <div
                             key={route.id}
-                            className="rounded-2xl border border-blue-200 bg-blue-50 p-5 shadow-sm dark:border-blue-900/50 dark:bg-blue-950/30"
+                            onClick={() => handlePopularRouteSelect(route)}
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(event) => {
+                                if (event.key === "Enter" || event.key === " ") {
+                                    event.preventDefault();
+                                    handlePopularRouteSelect(route);
+                                }
+                            }}
+                            className="cursor-pointer rounded-2xl border border-blue-200 bg-blue-50 p-5 shadow-sm transition-all hover:border-blue-400 hover:shadow-md dark:border-blue-900/50 dark:bg-blue-950/30 dark:hover:border-blue-700"
                         >
                             <div className="flex items-center gap-3">
                                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 dark:bg-blue-950 dark:text-blue-400">
