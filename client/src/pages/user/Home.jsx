@@ -1,5 +1,5 @@
 import { yupResolver } from "@hookform/resolvers/yup";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import homeSchema from "../../validations/user/homeSchema";
@@ -7,6 +7,9 @@ import Input from "../../components/common/Input";
 import Button from "../../components/common/Button";
 import ErrorMessage from "../../components/common/ErrorMessage";
 import { ArrowDownUp, Bus, CircleDollarSign, LocateFixed, MapPin, Navigation, Search } from "lucide-react";
+import { getAllStops } from "../../services/stopService";
+import { getAllRoutes } from "../../services/routeService";
+
 
 
 
@@ -14,40 +17,32 @@ import { ArrowDownUp, Bus, CircleDollarSign, LocateFixed, MapPin, Navigation, Se
 const Home = () => {
 
     const navigate = useNavigate();
+    const [stops, setStops] = useState([]);
+    const [popularRoutes, setPopularRoutes] = useState([]);
+    const [allRoutes, setAllRoutes] = useState([]);
+    const [apiError, setApiError] = useState("");
 
-    const stops = [
-        { _id: "1", stopName: "Thiruvananthapuram Central" },
-        { _id: "2", stopName: "Thampanoor" },
-        { _id: "3", stopName: "Kazhakoottam" },
-        { _id: "4", stopName: "Kollam" },
-        { _id: "5", stopName: "Attingal" },
-        { _id: "6", stopName: "Varkala" },
-        { _id: "7", stopName: "Kochi" },
-        { _id: "8", stopName: "Alappuzha" },
-    ];
+    useEffect(() => {
+        const fetchHomeData = async () => {
+            try {
+                const [stopsResponse, routeResponse] = await Promise.all([
+                    getAllStops(),
+                    getAllRoutes(),
+                ]);
 
-    const popularRoutes = [
-        {
-            id: "1",
-            source: "Thiruvananthapuram",
-            destination: "Kollam",
-        },
-        {
-            id: "2",
-            source: "Thiruvananthapuram",
-            destination: "Kochi",
-        },
-        {
-            id: "3",
-            source: "Kollam",
-            destination: "Alappuzha",
-        },
-        {
-            id: "4",
-            source: "Thiruvananthapuram",
-            destination: "Attingal",
-        },
-    ];
+                const routes = routeResponse.data.data || [];
+
+                setStops(stopsResponse.data.data || []);
+                setAllRoutes(routes);
+                setPopularRoutes(routes.slice(0, 4));
+                setApiError("");
+            } catch (error) {
+                setApiError(error.response?.data?.message || "Error fetching home page data.");
+            }
+        };
+
+        fetchHomeData();
+    }, []);
 
     const [showFromSuggestions, setShowFromSuggestions] = useState(false);
     const [showToSuggestions, setShowToSuggestions] = useState(false);
@@ -72,13 +67,33 @@ const Home = () => {
     const from = watch("from");
     const to = watch("to");
 
-    const filteredFromStops = stops.filter((stop) =>
-        stop.stopName.toLowerCase().includes(from.toLowerCase())
+
+    const routeEndpointNames = allRoutes.flatMap((route) => [
+        route.source?.name,
+        route.destination?.name,
+    ]);
+
+    const availableLocations = [
+        ...new Set(
+            [
+                ...stops.map((stop) => stop.stopName),
+                ...routeEndpointNames,
+            ].filter((location) => typeof location === "string" && location.trim())
+        ),
+    ];
+
+    const filteredFromStops = availableLocations.filter((location) =>
+        location.toLowerCase().includes(
+            String(from ?? "").toLowerCase()
+        )
     );
 
-    const filteredToStops = stops.filter((stop) =>
-        stop.stopName.toLowerCase().includes(to.toLowerCase())
+    const filteredToStops = availableLocations.filter((location) =>
+        location.toLowerCase().includes(
+            String(to ?? "").toLowerCase()
+        )
     );
+
 
     const handleFromChange = (event) => {
         setValue("from", event.target.value, {
@@ -106,8 +121,9 @@ const Home = () => {
         setShowToSuggestions(true);
     };
 
-    const handleFromSelect = (stop) => {
-        setValue("from", stop.stopName, {
+
+    const handleFromSelect = (location) => {
+        setValue("from", location, {
             shouldValidate: true,
         });
 
@@ -116,12 +132,12 @@ const Home = () => {
         });
 
         setShowFromSuggestions(false);
-
         clearErrors(["from", "fromSelected", "to"]);
     };
 
-    const handleToSelect = (stop) => {
-        setValue("to", stop.stopName, {
+
+    const handleToSelect = (location) => {
+        setValue("to", location, {
             shouldValidate: true,
         });
 
@@ -130,8 +146,35 @@ const Home = () => {
         });
 
         setShowToSuggestions(false);
-
         clearErrors(["to", "toSelected"]);
+    };
+
+    const handlePopularRouteSelect = (route) => {
+        const fromLocation = route.source?.name;
+        const toLocation = route.destination?.name;
+
+        if (!fromLocation || !toLocation) return;
+
+        setValue("from", fromLocation, {
+            shouldValidate: true,
+        });
+
+        setValue("fromSelected", true, {
+            shouldValidate: true,
+        });
+
+        setValue("to", toLocation, {
+            shouldValidate: true,
+        });
+
+        setValue("toSelected", true, {
+            shouldValidate: true,
+        });
+
+        setShowFromSuggestions(false);
+        setShowToSuggestions(false);
+
+        clearErrors();
     };
 
     const handleSwap = () => {
@@ -174,6 +217,10 @@ const Home = () => {
     return (
 
         <div className="space-y-8">
+
+            {apiError && (
+                <ErrorMessage message={apiError} />
+            )}
 
             {/* Hero Section */}
             <section className="relative overflow-hidden rounded-2xl bg-[url('/images/bus-hero.jpg')] bg-cover bg-center px-6 py-10 text-white sm:px-10">
@@ -244,11 +291,11 @@ const Home = () => {
                                 <div className="absolute left-0 right-0 top-full z-30 mt-2 max-h-48 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-[#202832]">
 
                                     {filteredFromStops.length > 0 ? (
-                                        filteredFromStops.map((stop) => (
+                                        filteredFromStops.map((location) => (
                                             <button
-                                                key={stop._id}
+                                                key={location}
                                                 type="button"
-                                                onClick={() => handleFromSelect(stop)}
+                                                onClick={() => handleFromSelect(location)}
                                                 className="flex w-full items-center gap-3 bg-blue-50 px-4 py-3 text-left text-sm text-gray-700 transition-colors hover:bg-blue-400 dark:bg-[#1b222c] dark:text-gray-200 dark:hover:bg-[#400d38]"
                                             >
                                                 <MapPin
@@ -256,7 +303,7 @@ const Home = () => {
                                                     className="shrink-0 text-green-600"
                                                 />
 
-                                                {stop.stopName}
+                                                {location}
                                             </button>
                                         ))
                                     ) : (
@@ -336,11 +383,11 @@ const Home = () => {
                                 <div className="absolute left-0 right-0 top-full z-30 mt-2 max-h-48 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-[#1b222c]">
 
                                     {filteredToStops.length > 0 ? (
-                                        filteredToStops.map((stop) => (
+                                        filteredToStops.map((location) => (
                                             <button
-                                                key={stop._id}
+                                                key={location}
                                                 type="button"
-                                                onClick={() => handleToSelect(stop)}
+                                                onClick={() => handleToSelect(location)}
                                                 className="flex w-full items-center gap-3 bg-blue-50 px-4 py-3 text-left text-sm text-gray-700 transition-colors hover:bg-blue-400 dark:bg-[#1b222c] dark:text-gray-200 dark:hover:bg-[#400d38]"
                                             >
                                                 <MapPin
@@ -348,7 +395,7 @@ const Home = () => {
                                                     className="shrink-0 text-green-600"
                                                 />
 
-                                                {stop.stopName}
+                                                {location}
                                             </button>
                                         ))
                                     ) : (
@@ -404,7 +451,16 @@ const Home = () => {
                     {popularRoutes.map((route) => (
                         <div
                             key={route.id}
-                            className="rounded-2xl border border-blue-200 bg-blue-50 p-5 shadow-sm dark:border-blue-900/50 dark:bg-blue-950/30"
+                            onClick={() => handlePopularRouteSelect(route)}
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(event) => {
+                                if (event.key === "Enter" || event.key === " ") {
+                                    event.preventDefault();
+                                    handlePopularRouteSelect(route);
+                                }
+                            }}
+                            className="cursor-pointer rounded-2xl border border-blue-200 bg-blue-50 p-5 shadow-sm transition-all hover:border-blue-400 hover:shadow-md dark:border-blue-900/50 dark:bg-blue-950/30 dark:hover:border-blue-700"
                         >
                             <div className="flex items-center gap-3">
                                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 dark:bg-blue-950 dark:text-blue-400">
@@ -413,13 +469,13 @@ const Home = () => {
 
                                 <div className="min-w-0">
                                     <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                                        {route.source}
+                                        {route.source?.name}
                                     </p>
 
                                     <div className="my-1 h-px w-8 bg-gray-300 dark:bg-gray-700" />
 
                                     <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                                        {route.destination}
+                                        {route.destination?.name}
                                     </p>
                                 </div>
                             </div>

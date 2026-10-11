@@ -37,6 +37,6 @@ initSocket(httpServer);
 
 const port = process.env.PORT;
 
-app.listen(port, () => {
+httpServer.listen(port, () => {
   console.log("Server connected");
 });
