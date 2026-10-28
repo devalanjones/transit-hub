@@ -87,15 +87,32 @@ const updateScheduleValidationSchema = Joi.object({
 }).min(1);
 
 const searchBusScheduleSchema = Joi.object({
-  from: objectId.required().messages({
-    "any.required": "'from' stop ID is required",
-    "string.empty": "'from' stop ID cannot be empty",
+  from: Joi.string().trim().min(1).required().messages({
+    "any.required": "'from' location is required",
+    "string.empty": "'from' location cannot be empty",
+    "string.min": "'from' location cannot be empty",
   }),
-  to: objectId.invalid(Joi.ref("from")).required().messages({
-    "any.required": "'to' stop ID is required",
-    "string.empty": "'to' stop ID cannot be empty",
-    "any.invalid": "'from' and 'to' stops cannot be identical",
-  }),
+
+  to: Joi.string()
+    .trim()
+    .min(1)
+    .required()
+    .custom((value, helpers) => {
+      const from = helpers.state.ancestors[0].from;
+
+      if (from?.trim().toLowerCase() === value.toLowerCase()) {
+        return helpers.error("any.invalid");
+      }
+
+      return value;
+    })
+    .messages({
+      "any.required": "'to' location is required",
+      "string.empty": "'to' location cannot be empty",
+      "string.min": "'to' location cannot be empty",
+      "any.invalid": "'from' and 'to' locations cannot be identical",
+    }),
+
   date: dateFormat,
   day: Joi.string().valid(...daysEnum),
 }).oxor("date", "day");
