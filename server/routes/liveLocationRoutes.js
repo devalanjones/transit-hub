@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const locationController = require("../controllers/liveLocationController");
-const validate = require("../middlewares/validateLiveLocation");
+const validate = require("../middlewares/validate");
 const {
   createLocationSchema,
   getHistoryQuerySchema,
