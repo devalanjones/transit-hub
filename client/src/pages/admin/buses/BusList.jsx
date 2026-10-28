@@ -98,7 +98,7 @@ const BusList = () => {
     (bus) =>
       bus.busRegNumber?.toLowerCase().includes(search.toLowerCase()) ||
       bus.busName?.toLowerCase().includes(search.toLowerCase()) ||
-      bus.busType?.busType?.toLowerCase().includes(search.toLowerCase()),
+      bus.busFare?.busType?.toLowerCase().includes(search.toLowerCase()),
   );
 
   const busesPerPage = 10;

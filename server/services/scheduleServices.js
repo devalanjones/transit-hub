@@ -311,19 +311,25 @@ const deleteSchedule = async (id) => {
 };
 
 const searchSchedulesBetweenStops = async ({ from, to, day }) => {
-  const fromObjectId = new mongoose.Types.ObjectId(from);
-  const toObjectId = new mongoose.Types.ObjectId(to);
+  if (!from || !to) {
+    return [];
+  }
+
+  const normalizeName = (value) =>
+    String(value || "").trim().toLowerCase();
+
+  const isObjectId = (value) =>
+    mongoose.isValidObjectId(value);
 
   const query = {
     status: { $ne: "CANCELLED" },
-    "stops.stopId": { $all: [fromObjectId, toObjectId] },
   };
 
   if (day) {
     query.days = day;
   }
 
-  // 1. Fetch matching schedules using the exact populate patterns from your service
+  // Fetch schedules without requiring both locations to be registered stops.
   const schedules = await Schedule.find(query)
     .populate({
       path: "busId",
@@ -336,58 +342,120 @@ const searchSchedulesBetweenStops = async ({ from, to, day }) => {
     .sort({ departureTime: 1 })
     .lean();
 
-  // 2. Filter for sequence order (from must come before to) and format response
   const results = [];
 
   for (const schedule of schedules) {
-    // Find the matching stops in the populated schedule
-    const originStop = schedule.stops.find(
-      (s) => s.stopId && s.stopId._id.toString() === from.toString(),
-    );
-    const destStop = schedule.stops.find(
-      (s) => s.stopId && s.stopId._id.toString() === to.toString(),
-    );
+    const route = schedule.routeId;
 
-    // Ensure both stops exist and origin sequence comes before destination sequence
+    if (!route) continue;
+
+    const sourceName = route.source?.name || "";
+    const destinationName = route.destination?.name || "";
+
+    const findLocation = (value) => {
+      const searchValue = normalizeName(value);
+
+      // If the frontend sends a Stop MongoDB ID, match by ID.
+      if (isObjectId(value)) {
+        const stop = schedule.stops.find(
+          (item) =>
+            item.stopId &&
+            String(item.stopId._id) === String(value)
+        );
+
+        if (!stop) return null;
+
+        return {
+          stop: stop.stopId,
+          stopSequence: stop.stopSequence,
+          expectedArrivalTime: stop.expectedArrivalTime,
+          order: stop.stopSequence,
+        };
+      }
+
+      // Match the route source using its configured departure time.
+      if (searchValue === normalizeName(sourceName)) {
+        return {
+          stop: { stopName: sourceName },
+          stopSequence: 0,
+          expectedArrivalTime: schedule.departureTime,
+          order: Number.NEGATIVE_INFINITY,
+        };
+      }
+
+      // Match the route destination using its configured arrival time.
+      if (searchValue === normalizeName(destinationName)) {
+        return {
+          stop: { stopName: destinationName },
+          stopSequence: null,
+          expectedArrivalTime: schedule.arrivalTime,
+          order: Number.POSITIVE_INFINITY,
+        };
+      }
+
+      // Otherwise, match a registered stop by its name.
+      const stop = schedule.stops.find(
+        (item) =>
+          item.stopId &&
+          normalizeName(item.stopId.stopName) === searchValue
+      );
+
+      if (!stop) return null;
+
+      return {
+        stop: stop.stopId,
+        stopSequence: stop.stopSequence,
+        expectedArrivalTime: stop.expectedArrivalTime,
+        order: stop.stopSequence,
+      };
+    };
+
+    const origin = findLocation(from);
+    const destination = findLocation(to);
+
+    // Both locations must exist on this route, in the correct order.
     if (
-      originStop &&
-      destStop &&
-      originStop.stopSequence < destStop.stopSequence
+      !origin ||
+      !destination ||
+      origin.order >= destination.order
     ) {
-      results.push({
-        _id: schedule._id,
-        status: schedule.status,
-        days: schedule.days,
-        bus: schedule.busId,
-        route: schedule.routeId,
-        departureTime: schedule.departureTime,
-        arrivalTime: schedule.arrivalTime,
-        tripSegment: {
-          origin: {
-            stop: originStop.stopId,
-            stopSequence: originStop.stopSequence,
-            expectedArrivalTime: originStop.expectedArrivalTime,
-          },
-          destination: {
-            stop: destStop.stopId,
-            stopSequence: destStop.stopSequence,
-            expectedArrivalTime: destStop.expectedArrivalTime,
-          },
-        },
-        routeGeometry: schedule.routeGeometry,
-      });
+      continue;
     }
+
+    results.push({
+      _id: schedule._id,
+      status: schedule.status,
+      days: schedule.days,
+      bus: schedule.busId,
+      route: schedule.routeId,
+      departureTime: schedule.departureTime,
+      arrivalTime: schedule.arrivalTime,
+      tripSegment: {
+        origin: {
+          stop: origin.stop,
+          stopSequence: origin.stopSequence,
+          expectedArrivalTime: origin.expectedArrivalTime,
+        },
+        destination: {
+          stop: destination.stop,
+          stopSequence: destination.stopSequence,
+          expectedArrivalTime: destination.expectedArrivalTime,
+        },
+      },
+      routeGeometry: schedule.routeGeometry,
+    });
   }
 
-  // Sort by expected arrival time at the pickup stop
+  // Sort by departure time at the selected From location.
   results.sort(
     (a, b) =>
       new Date(a.tripSegment.origin.expectedArrivalTime) -
-      new Date(b.tripSegment.origin.expectedArrivalTime),
+      new Date(b.tripSegment.origin.expectedArrivalTime)
   );
 
   return results;
 };
+
 
 module.exports = {
   createSchedule,

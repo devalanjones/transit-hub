@@ -43,15 +43,32 @@ const toInputTimeString = (timeVal) => {
 };
 
 // Converts the input's local "HH:mm" (IST) into an ISO UTC string for MongoDB/API
-const toIsoDateTime = (timeStr) => {
+
+const toIsoDateTime = (timeStr, departureTime = null) => {
   if (!timeStr) return null;
+
   const [hours, minutes] = timeStr.split(":").map(Number);
 
-  // Set hours in LOCAL time, toISOString() will convert it to UTC correctly
   const date = new Date();
   date.setHours(hours, minutes, 0, 0);
+
+  if (departureTime) {
+    const [departureHours, departureMinutes] = departureTime
+      .split(":")
+      .map(Number);
+
+    const arrivalTotalMinutes = hours * 60 + minutes;
+    const departureTotalMinutes =
+      departureHours * 60 + departureMinutes;
+
+    if (arrivalTotalMinutes <= departureTotalMinutes) {
+      date.setDate(date.getDate() + 1);
+    }
+  }
+
   return date.toISOString();
 };
+
 
 const UpdateSchedule = () => {
   const { id } = useParams();
@@ -117,58 +134,79 @@ const UpdateSchedule = () => {
           ]);
 
         const schedule = scheduleResponse.data.data;
+        const scheduleStops = schedule.stops || [];
 
         setBuses(busResponse.data.data || []);
         setRoutes(routeResponse.data.data || []);
 
-        setSelectedStops(
-          schedule.stops.map((scheduleStop) => scheduleStop.stopId),
+        // Remove deleted stops while keeping valid stops in their original order.
+        const validScheduleStops = scheduleStops.filter(
+          (scheduleStop) => scheduleStop?.stopId
         );
 
-        setValue("busId", schedule.busId?._id || schedule.busId);
-        const routeId = schedule.routeId?._id || schedule.routeId;
+        const existingStops = validScheduleStops.map((scheduleStop) => {
+          const stop = scheduleStop.stopId;
+
+          return typeof stop === "object"
+            ? stop
+            : { _id: stop, stopName: "Stop unavailable" };
+        });
+
+        setSelectedStops(existingStops);
+
+        setValue("busId", schedule.busId?._id || schedule.busId || "");
+
+        const routeId = schedule.routeId?._id || schedule.routeId || "";
 
         setValue("routeId", routeId);
 
+        let candidateStops = [];
+
         if (routeId) {
           const candidateResponse = await getCandidateStopsByRoute(routeId);
-          const candidateStops = candidateResponse.data.data || [];
-
-          const existingStops = schedule.stops.map(
-            (scheduleStop) => scheduleStop.stopId,
-          );
-
-          const allStops = [
-            ...candidateStops,
-            ...existingStops.filter(
-              (existingStop) =>
-                !candidateStops.some(
-                  (candidateStop) => candidateStop._id === existingStop._id,
-                ),
-            ),
-          ];
-
-          setStops(allStops);
+          candidateStops = candidateResponse.data.data || [];
         }
+
+        const allStops = [
+          ...candidateStops.filter(Boolean),
+          ...existingStops.filter(
+            (existingStop) =>
+              !candidateStops.some(
+                (candidateStop) =>
+                  candidateStop?._id === existingStop._id
+              )
+          ),
+        ];
+
+        setStops(allStops);
 
         setValue("arrivalTime", toInputTimeString(schedule.arrivalTime));
         setValue("departureTime", toInputTimeString(schedule.departureTime));
         setValue("days", schedule.days || []);
         setValue("status", schedule.status || "");
+
+        // Keep the form stops aligned with the displayed stops.
+        // Each valid stop retains its own expected arrival time.
         setValue(
           "stops",
-          schedule.stops.map((scheduleStop) => ({
-            stopId: scheduleStop.stopId?._id || scheduleStop.stopId,
-            stopSequence: scheduleStop.stopSequence,
-            expectedArrivalTime: toInputTimeString(
-              scheduleStop.expectedArrivalTime,
-            ),
-          })),
+          validScheduleStops.map((scheduleStop, index) => {
+            const stop = scheduleStop.stopId;
+
+            return {
+              stopId: stop?._id || stop,
+              stopSequence: index + 1,
+              expectedArrivalTime: toInputTimeString(
+                scheduleStop.expectedArrivalTime
+              ),
+            };
+          })
         );
 
         setSelectedDays(schedule.days || []);
       } catch (err) {
-        setError(err.response?.data?.message || "Failed to load schedule");
+        setError(
+          err.response?.data?.message || "Failed to load schedule"
+        );
       } finally {
         setLoading(false);
       }
@@ -176,6 +214,7 @@ const UpdateSchedule = () => {
 
     fetchData();
   }, [id, setValue]);
+
 
   if (loading) {
     return <Loading message="Loading..." />;
@@ -223,27 +262,31 @@ const UpdateSchedule = () => {
     }
   };
 
+
   const handleStopChange = (stop) => {
-    const isSelected = selectedStops.some(
-      (selectedStop) => selectedStop._id === stop._id,
+    if (!stop?._id) return;
+
+    const validSelectedStops = selectedStops.filter(Boolean);
+
+    const isSelected = validSelectedStops.some(
+      (selectedStop) => selectedStop._id === stop._id
     );
 
     const currentStopValues = watch("stops") || [];
-    let newSelectedStops;
 
-    if (isSelected) {
-      newSelectedStops = selectedStops.filter(
-        (selectedStop) => selectedStop._id !== stop._id,
-      );
-    } else {
-      newSelectedStops = [...selectedStops, stop];
-    }
+    const newSelectedStops = isSelected
+      ? validSelectedStops.filter(
+        (selectedStop) => selectedStop._id !== stop._id
+      )
+      : [...validSelectedStops, stop];
 
     setSelectedStops(newSelectedStops);
 
     const newStopValues = newSelectedStops.map((selectedStop, index) => {
       const existingStop = currentStopValues.find(
-        (stopValue) => stopValue.stopId === selectedStop._id,
+        (stopValue) =>
+          (stopValue?.stopId?._id || stopValue?.stopId) ===
+          selectedStop._id
       );
 
       return {
@@ -262,31 +305,39 @@ const UpdateSchedule = () => {
   };
 
   const handleDrop = (dropIndex) => {
-    if (draggedIndex === null || draggedIndex === dropIndex) {
+    const validSelectedStops = selectedStops.filter(Boolean);
+
+    if (
+      draggedIndex === null ||
+      draggedIndex === dropIndex ||
+      !validSelectedStops[draggedIndex] ||
+      !validSelectedStops[dropIndex]
+    ) {
+      setDraggedIndex(null);
       return;
     }
 
-    const reorderedStops = [...selectedStops];
-    const draggedStop = reorderedStops[draggedIndex];
+    const reorderedStops = [...validSelectedStops];
+    const [draggedStop] = reorderedStops.splice(draggedIndex, 1);
 
-    reorderedStops.splice(draggedIndex, 1);
     reorderedStops.splice(dropIndex, 0, draggedStop);
 
-    setSelectedStops(reorderedStops);
-
     const currentStopValues = watch("stops") || [];
+
     const reorderedStopValues = reorderedStops.map((stop, index) => {
-      const oldIndex = selectedStops.findIndex(
-        (selectedStop) => selectedStop._id === stop._id,
+      const existingStop = currentStopValues.find(
+        (stopValue) =>
+          (stopValue?.stopId?._id || stopValue?.stopId) === stop._id
       );
 
       return {
         stopId: stop._id,
         stopSequence: index + 1,
-        expectedArrivalTime:
-          currentStopValues[oldIndex]?.expectedArrivalTime || "",
+        expectedArrivalTime: existingStop?.expectedArrivalTime || "",
       };
     });
+
+    setSelectedStops(reorderedStops);
 
     setValue("stops", reorderedStopValues, {
       shouldValidate: true,
@@ -327,10 +378,15 @@ const UpdateSchedule = () => {
       const payload = {
         ...data,
         departureTime: toIsoDateTime(data.departureTime),
-        arrivalTime: toIsoDateTime(data.arrivalTime),
+        arrivalTime: toIsoDateTime(
+          data.arrivalTime,
+          data.departureTime,
+        ),
         stops: data.stops.map((stop) => ({
           ...stop,
-          expectedArrivalTime: toIsoDateTime(stop.expectedArrivalTime),
+          expectedArrivalTime: toIsoDateTime(
+            stop.expectedArrivalTime,
+          ),
         })),
         routeGeometry: routeResponse.data.data.geometry,
       };
@@ -339,6 +395,9 @@ const UpdateSchedule = () => {
       toast.success(response.data?.message || "Schedule updated successfully");
       navigate("/admin/schedules");
     } catch (err) {
+      console.error("Update Schedule Error:", err);
+      console.error("Backend Response:", err.response?.data);
+      console.error("Validation Errors:", err.response?.data?.errors);
       toast.error(err.response?.data?.message || "Failed to update schedule");
     } finally {
       setUpdating(false);
@@ -473,16 +532,16 @@ const UpdateSchedule = () => {
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-100">
                   Selected Stops
                 </h3>
+
                 <span className="ml-auto w-44 text-right text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-100">
                   Expected Arrival Time
                 </span>
               </div>
 
-              {selectedStops.length > 0 ? (
+              {selectedStops.filter(Boolean).length > 0 ? (
                 <div className="space-y-2">
                   {selectedStops.map((stop, index) => {
-                    const currentStopVal =
-                      watchedStops[index]?.expectedArrivalTime;
+                    if (!stop?._id) return null;
 
                     return (
                       <div
@@ -502,8 +561,25 @@ const UpdateSchedule = () => {
                         </span>
 
                         <span className="flex-1 font-medium text-slate-800 dark:text-slate-100">
-                          {stop.stopName}
+                          {stop.stopName || "Stop unavailable"}
                         </span>
+
+                        <input
+                          type="time"
+                          {...register(`stops.${index}.expectedArrivalTime`)}
+                          value={watchedStops[index]?.expectedArrivalTime || ""}
+                          onChange={(event) =>
+                            setValue(
+                              `stops.${index}.expectedArrivalTime`,
+                              event.target.value,
+                              {
+                                shouldDirty: true,
+                                shouldValidate: true,
+                              },
+                            )
+                          }
+                          className="w-44 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                        />
 
                         <Button
                           type="button"
@@ -512,58 +588,19 @@ const UpdateSchedule = () => {
                           onClick={() => handleStopChange(stop)}
                           className="px-3 py-1 text-xs"
                         >
-                          <Trash2 size={14} className="sm:hidden" />
-                          <span className="hidden sm:inline">Remove</span>
+                          Remove
                         </Button>
-
-                        <div className="w-44 text-right">
-                          <Input
-                            type="time"
-                            {...register(`stops.${index}.expectedArrivalTime`, {
-                              onChange: () => {
-                                trigger(`stops.${index}.expectedArrivalTime`);
-                              },
-                            })}
-                            error={Boolean(
-                              errors.stops?.[index]?.expectedArrivalTime,
-                            )}
-                            className="py-1.5 text-xs dark:text-white"
-                          />
-
-                          {/* Live Formatted Stop Time Preview */}
-                          {currentStopVal && (
-                            <div className="mt-1">
-                              <FormattedTime
-                                value={currentStopVal}
-                                className="text-xs font-semibold text-orange-600 dark:text-orange-400"
-                              />
-                            </div>
-                          )}
-
-                          {errors.stops?.[index]?.expectedArrivalTime && (
-                            <ErrorMessage
-                              message={
-                                errors.stops[index].expectedArrivalTime.message
-                              }
-                            />
-                          )}
-                        </div>
                       </div>
                     );
                   })}
                 </div>
               ) : (
-                <p className="text-sm text-slate-500 dark:text-slate-300">
-                  No stops selected
+                <p className="rounded-xl border border-dashed border-slate-300 p-4 text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
+                  No stops selected. Please select stops for this route.
                 </p>
               )}
-
-              {errors.stops && !Array.isArray(errors.stops) && (
-                <div className="mt-2">
-                  <ErrorMessage message={errors.stops.message} />
-                </div>
-              )}
             </div>
+
           </div>
 
           {/* 4. Days */}

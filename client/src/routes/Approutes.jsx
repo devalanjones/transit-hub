@@ -21,6 +21,7 @@ import UpdateSchedule from "../pages/admin/schedules/UpdateSchedule";
 import UserList from "../pages/admin/user/UserList";
 import UserLayout from "../components/users/UserLayout";
 import Home from "../pages/user/Home";
+import BusSchedule from "../pages/user/BusSchedule";
 
 
 const AppRoutes = () => {
@@ -76,6 +77,8 @@ const AppRoutes = () => {
             <Route path={"/user"} element={<UserLayout />}>
 
                 <Route path={""} element={<Home />} />
+
+                <Route path={"bus-schedule"} element={<BusSchedule />} />
 
             </Route>
 

@@ -198,8 +198,9 @@ let getRouteGeometryByStops = async (req, res) => {
 };
 
 const searchSchedules = async (req, res) => {
+
   try {
-    const { from, to, day } = req.searchFilters;
+    const { from, to, day } = req.query;
 
     const schedules = await scheduleService.searchSchedulesBetweenStops({
       from,
@@ -213,11 +214,10 @@ const searchSchedules = async (req, res) => {
       data: schedules,
     });
   } catch (error) {
-    console.error("Error searching schedules:", error);
+    console.error("Search schedule error:", error);
     return res.status(500).json({
       success: false,
-      message: "Internal server error while searching schedules",
-      error: error.message,
+      message: "Internal server error while searching bus schedules. Please try again later",
     });
   }
 };
