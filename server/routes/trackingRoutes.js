@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const trackingController = require("../controllers/trackingController");
-const validate = require("../middlewares/validateLiveLocation");
+const validate = require("../middlewares/validate");
 const { pingLocationSchema } = require("../validations/riderLocationValidation");
 
 // Ingest crowdsourced rider updates

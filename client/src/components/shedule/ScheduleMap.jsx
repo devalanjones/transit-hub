@@ -164,7 +164,7 @@ const ScheduleMap = ({
     <div className="relative overflow-hidden rounded-lg border border-gray-200 shadow-sm">
 
       {isLoadingRoute && (
-        <div className="absolute top-2 right-2 z-[1000] rounded bg-white/90 px-2 py-1 text-xs font-medium text-gray-600 shadow">
+        <div className="absolute top-2 right-2 z-1000 rounded bg-white/90 px-2 py-1 text-xs font-medium text-gray-600 shadow">
           Tracing road path...
         </div>
       )}
