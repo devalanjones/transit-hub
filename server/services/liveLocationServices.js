@@ -11,27 +11,30 @@ class LocationService {
   /**
    * Fetch the most recent recorded position of a bus
    */
+
   async getLatestBusLocation(busId) {
-    return await Location.findOne({ bus: busId })
+    return await Location.findOne({ busId })
       .sort({ createdAt: -1 })
-      .populate("bus", "busNumber plateNumber capacity")
-      .populate("schedule", "route departureTime arrivalTime")
+      .populate("busId", "busNumber plateNumber capacity")
+      .populate("scheduleId", "route departureTime arrivalTime")
       .lean();
   }
 
   /**
    * Get location history for a given schedule run (e.g. for map polylines)
    */
+
   async getLocationTrailBySchedule(scheduleId, page = 1, limit = 20) {
     const skip = (page - 1) * limit;
 
     const [trail, total] = await Promise.all([
-      Location.find({ schedule: scheduleId })
+      Location.find({ scheduleId })
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .lean(),
-      Location.countDocuments({ schedule: scheduleId }),
+
+      Location.countDocuments({ scheduleId }),
     ]);
 
     return {
@@ -41,6 +44,7 @@ class LocationService {
       trail,
     };
   }
+
 
   /**
    * Find all active buses within a given radius in meters
@@ -64,7 +68,7 @@ class LocationService {
       },
       {
         $group: {
-          _id: "$bus",
+          _id: "$busId",
           latestDocument: { $first: "$$ROOT" },
         },
       },

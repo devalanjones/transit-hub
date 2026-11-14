@@ -70,6 +70,8 @@ const mapScheduleToBus = (schedule) => {
 
     return {
         id: schedule._id,
+        scheduleId: schedule._id,
+        busId: bus._id || schedule.busId,
         busNumber: bus.busRegNumber || bus.busName || bus.busNumber || "Bus number unavailable",
         busType: getBusTypeName(bus.busType),
         routeName,
@@ -494,7 +496,11 @@ const BusSchedule = () => {
                                         <Button
                                             type="button"
                                             onClick={() => {
-                                                // Bus Details navigation will be added next.
+                                                navigate(
+                                                    `/user/busScheduleDetails/${bus.scheduleId}?from=${encodeURIComponent(
+                                                        from
+                                                    )}&to=${encodeURIComponent(to)}`
+                                                );
                                             }}
                                             className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3.5 text-sm font-semibold text-white shadow-md shadow-blue-600/15 transition-all duration-200 hover:bg-blue-700 hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-blue-500/25 sm:w-auto"
                                         >

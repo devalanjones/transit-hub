@@ -13,6 +13,7 @@ import {
   MapPin,
   Route,
 } from "lucide-react";
+import showUnavailable from "../../utils/showUnavailabe";
 
 const UserNavbar = ({ setSidebarOpen, sidebarOpen }) => {
   const navigate = useNavigate();
@@ -222,7 +223,7 @@ const UserNavbar = ({ setSidebarOpen, sidebarOpen }) => {
           {/* Notification */}
           <button
             type="button"
-            onClick={() => navigate("/user/notification")}
+            onClick={showUnavailable}
             className="relative rounded-lg p-2.5 text-neutral-300 transition-all hover:bg-white/10 hover:text-orange-400"
             aria-label="View notifications"
           >
@@ -237,7 +238,7 @@ const UserNavbar = ({ setSidebarOpen, sidebarOpen }) => {
           {/* User Profile */}
           <button
             type="button"
-            onClick={() => navigate("/user/profile")}
+            onClick={showUnavailable}
             className="flex items-center gap-2 rounded-lg px-2 py-2 text-neutral-300 transition-all hover:bg-white/10 hover:text-white"
             aria-label="View profile"
           >

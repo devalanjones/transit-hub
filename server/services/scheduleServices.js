@@ -193,6 +193,95 @@ const getRouteGeometryByStops = async (stopIds) => {
   };
 };
 
+const getRouteGeometryByCoordinates = async ({
+  source,
+  stops = [],
+  destination,
+}) => {
+  // Validate source and destination
+  if (!source || !destination) {
+    const error = new Error(
+      "Source and destination coordinates are required",
+    );
+    error.status = 400;
+    throw error;
+  }
+
+  // Convert coordinates into a consistent format
+  const routePoints = [
+    source,
+    ...stops,
+    destination,
+  ].map((point) => ({
+    latitude: Number(point.latitude),
+    longitude: Number(point.longitude),
+  }));
+
+  // Validate all coordinates
+  const invalidCoordinates = routePoints.some(
+    (point) =>
+      !Number.isFinite(point.latitude) ||
+      !Number.isFinite(point.longitude) ||
+      point.latitude < -90 ||
+      point.latitude > 90 ||
+      point.longitude < -180 ||
+      point.longitude > 180,
+  );
+
+  if (invalidCoordinates) {
+    const error = new Error("Invalid route coordinates");
+    error.status = 400;
+    throw error;
+  }
+
+  if (routePoints.length < 2) {
+    const error = new Error(
+      "At least two route points are required",
+    );
+    error.status = 400;
+    throw error;
+  }
+
+  // Build OSRM coordinate string in the correct order
+  const coordinates = routePoints
+    .map(
+      (point) =>
+        `${point.longitude},${point.latitude}`,
+    )
+    .join(";");
+
+  const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${coordinates}`;
+
+  const { stdout } = await execFileAsync("curl", [
+    "-s",
+    "--max-time",
+    "30",
+    "-G",
+    osrmUrl,
+    "--data-urlencode",
+    "overview=full",
+    "--data-urlencode",
+    "geometries=geojson",
+  ]);
+
+  const routeData = JSON.parse(stdout);
+
+  if (
+    !routeData.routes ||
+    routeData.routes.length === 0
+  ) {
+    const error = new Error("Road route not found");
+    error.status = 404;
+    throw error;
+  }
+
+  return {
+    geometry: routeData.routes[0].geometry,
+    distance: routeData.routes[0].distance,
+    duration: routeData.routes[0].duration,
+  };
+};
+
 const createSchedule = async (data) => {
   return await Schedule.create(data);
 };
@@ -466,6 +555,7 @@ module.exports = {
   getSchedulesByStop,
   getCandidateStopsByRoute,
   getRouteGeometryByStops,
+  getRouteGeometryByCoordinates,
   updateSchedule,
   deleteSchedule,
   searchSchedulesBetweenStops,

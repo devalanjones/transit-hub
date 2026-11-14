@@ -52,6 +52,8 @@ const createStopIcon = (isFirst, isLast) => {
 };
 
 const ScheduleMap = ({
+  source,
+  destination,
   stops = [],
   routeGeometry,
 }) => {
@@ -89,9 +91,60 @@ const ScheduleMap = ({
         s.lng !== 0,
     );
 
+  const getValidLocation = (location) => {
+    if (!location) return null;
+
+    const lat = Number(location.latitude);
+    const lng = Number(location.longitude);
+
+    if (
+      !Number.isFinite(lat) ||
+      !Number.isFinite(lng) ||
+      lat === 0 ||
+      lng === 0
+    ) {
+      return null;
+    }
+
+    return {
+      lat,
+      lng,
+      name: location.name || "Terminal",
+    };
+  };
+
+  const sourceLocation = getValidLocation(source);
+  const destinationLocation = getValidLocation(destination);
+
+  const markerPositions = [
+    ...(sourceLocation
+      ? [[sourceLocation.lat, sourceLocation.lng]]
+      : []),
+    ...validStops.map((stop) => [stop.lat, stop.lng]),
+    ...(destinationLocation
+      ? [[destinationLocation.lat, destinationLocation.lng]]
+      : []),
+  ];
+  const routePoints = [
+    ...(sourceLocation
+      ? [{ lat: sourceLocation.lat, lng: sourceLocation.lng }]
+      : []),
+
+    ...validStops.map((stop) => ({
+      lat: stop.lat,
+      lng: stop.lng,
+    })),
+
+    ...(destinationLocation
+      ? [{
+        lat: destinationLocation.lat,
+        lng: destinationLocation.lng,
+      }]
+      : []),
+  ];
   // Query OSRM to snap polyline paths to real driving roads
   useEffect(() => {
-    if (validStops.length < 2) {
+    if (routePoints.length < 2) {
       setRoadPolyline([]);
       return;
     }
@@ -100,8 +153,8 @@ const ScheduleMap = ({
       setIsLoadingRoute(true);
 
       try {
-        const coordinateString = validStops
-          .map((s) => `${s.lng},${s.lat}`)
+        const coordinateString = routePoints
+          .map((point) => `${point.lng},${point.lat}`)
           .join(";");
 
         const response = await fetch(
@@ -122,17 +175,14 @@ const ScheduleMap = ({
           setRoadPolyline(mappedRoute);
         } else {
           setRoadPolyline(
-            validStops.map((s) => [s.lat, s.lng]),
+            routePoints.map((point) => [point.lat, point.lng]),
           );
         }
       } catch (err) {
-        console.error(
-          "Failed to fetch road snapped geometry:",
-          err,
-        );
+        console.error("Failed to fetch road snapped geometry:", err);
 
         setRoadPolyline(
-          validStops.map((s) => [s.lat, s.lng]),
+          routePoints.map((point) => [point.lat, point.lng]),
         );
       } finally {
         setIsLoadingRoute(false);
@@ -140,9 +190,15 @@ const ScheduleMap = ({
     };
 
     fetchRoadRoute();
-  }, [stops]);
+  }, [
+    stops,
+    source?.latitude,
+    source?.longitude,
+    destination?.latitude,
+    destination?.longitude,
+  ]);
 
-  if (validStops.length === 0) {
+  if (markerPositions.length === 0) {
     return (
       <div className="flex h-64 items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50 text-sm text-gray-500">
         No valid geographical coordinates found for these stops.
@@ -150,9 +206,9 @@ const ScheduleMap = ({
     );
   }
 
-  const directPoints = validStops.map((s) => [
-    s.lat,
-    s.lng,
+  const directPoints = routePoints.map((point) => [
+    point.lat,
+    point.lng,
   ]);
 
   const activePolyline =
@@ -170,7 +226,7 @@ const ScheduleMap = ({
       )}
 
       <MapContainer
-        center={directPoints[0]}
+        center={markerPositions[0]}
         zoom={13}
         scrollWheelZoom={false}
         className="h-96 w-full z-0"
@@ -192,11 +248,51 @@ const ScheduleMap = ({
           }}
         />
 
+        {/* Source Marker */}
+        {sourceLocation && (
+          <Marker
+            position={[sourceLocation.lat, sourceLocation.lng]}
+            icon={createStopIcon(true, false)}
+          >
+            <Popup>
+              <div className="p-1">
+                <p className="font-semibold text-green-600">
+                  Source
+                </p>
+                <p className="text-sm text-gray-700">
+                  {sourceLocation.name}
+                </p>
+              </div>
+            </Popup>
+          </Marker>
+        )}
+
+        {/* Destination Marker */}
+        {destinationLocation && (
+          <Marker
+            position={[
+              destinationLocation.lat,
+              destinationLocation.lng,
+            ]}
+            icon={createStopIcon(false, true)}
+          >
+            <Popup>
+              <div className="p-1">
+                <p className="font-semibold text-red-600">
+                  Destination
+                </p>
+                <p className="text-sm text-gray-700">
+                  {destinationLocation.name}
+                </p>
+              </div>
+            </Popup>
+          </Marker>
+        )}
+
         {/* Stop Markers */}
         {validStops.map((stop, idx) => {
-          const isFirst = idx === 0;
-          const isLast =
-            idx === validStops.length - 1;
+          const isFirst = false;
+          const isLast = false;
 
           return (
             <Marker
@@ -235,7 +331,7 @@ const ScheduleMap = ({
           );
         })}
 
-        <MapAutoBounds positions={activePolyline} />
+        <MapAutoBounds positions={markerPositions} />
 
       </MapContainer>
     </div>

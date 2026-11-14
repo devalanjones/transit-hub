@@ -41,7 +41,7 @@ const initSocket = (httpServer) => {
     // Direct WebSocket ingestion for driver pings
     socket.on("driver_ping", async (payload) => {
       try {
-        const trackingService = require("../services/tracking.service");
+        const trackingService = require("../services/trackingServices");
         await trackingService.processDriverPing(payload);
       } catch (err) {
         socket.emit("tracking_error", { message: err.message });

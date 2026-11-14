@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bus, ChevronRight, Bell, UserCircle, Sun, Moon } from "lucide-react";
+import showUnavailable from "../../utils/showUnavailabe";
 
 const AdminNavbar = ({ setSidebarOpen, sidebarOpen }) => {
   const navigate = useNavigate();
@@ -35,9 +36,8 @@ const AdminNavbar = ({ setSidebarOpen, sidebarOpen }) => {
           <Bus size={22} className="text-orange-600 dark:text-orange-500" />
           <ChevronRight
             size={18}
-            className={`transition-transform duration-300 ${
-              sidebarOpen ? "rotate-180" : "rotate-0"
-            }`}
+            className={`transition-transform duration-300 ${sidebarOpen ? "rotate-180" : "rotate-0"
+              }`}
           />
         </button>
 
@@ -64,7 +64,7 @@ const AdminNavbar = ({ setSidebarOpen, sidebarOpen }) => {
         {/* Notifications */}
         <button
           type="button"
-          onClick={() => navigate("/admin/notifications")}
+          onClick={() => showUnavailable(navigate)}
           className="relative rounded-lg p-2 text-gray-700 hover:bg-orange-50 dark:text-gray-300 dark:hover:bg-neutral-800 transition-colors"
           aria-label="View notifications"
         >

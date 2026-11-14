@@ -48,13 +48,23 @@ export const getSchedulesByStop = async (stopId) => {
 
 };
 
-export const getRouteGeometryByStops = (stopIds) => {
+export const getRouteGeometryByStops = async (stopIds) => {
 
-    return api.post("/schedules/route-geometry", {
+    return await api.post("/schedules/route-geometry", {
 
         stopIds,
 
     });
+
+};
+
+export const getRouteGeometryByCoordinates = async (routeData) => {
+
+    return await api.post("/schedules/route-geometry/coordinates",
+
+        routeData,
+
+    );
 
 };
 

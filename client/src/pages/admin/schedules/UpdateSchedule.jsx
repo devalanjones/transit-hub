@@ -4,7 +4,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { toast } from "sonner";
 import { ArrowLeft, GripVertical, Trash2 } from "lucide-react";
-
 import updateScheduleSchema from "../../../validations/schedule/updateScheduleSchema";
 import {
   getScheduleById,
@@ -752,6 +751,7 @@ const UpdateSchedule = () => {
               variant="primary"
               disabled={updating}
               loading={updating}
+              loadingText="Updating..."
             >
               Update Schedule
             </Button>

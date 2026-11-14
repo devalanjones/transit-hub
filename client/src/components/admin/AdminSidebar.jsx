@@ -14,6 +14,7 @@ import {
   Users,
 } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
+import showUnavailable from "../../utils/showUnavailabe";
 
 const AdminSidebar = ({ sidebarOpen, setSidebarOpen }) => {
   const navigate = useNavigate();
@@ -36,18 +37,16 @@ const AdminSidebar = ({ sidebarOpen, setSidebarOpen }) => {
 
   // Main menu styling: Vibrant orange gradient when active, crisp slate text in dark mode
   const menuClass = ({ isActive }) =>
-    `flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-      isActive
-        ? "bg-gradient-to-r from-orange-600 to-orange-500 text-white shadow-xs font-semibold"
-        : "text-slate-700 hover:bg-orange-50/70 hover:text-orange-600 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-white"
+    `flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${isActive
+      ? "bg-gradient-to-r from-orange-600 to-orange-500 text-white shadow-xs font-semibold"
+      : "text-slate-700 hover:bg-orange-50/70 hover:text-orange-600 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-white"
     }`;
 
   // Submenu styling: Orange tint badge when active
   const subMenuClass = ({ isActive }) =>
-    `flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
-      isActive
-        ? "bg-orange-50 font-semibold text-orange-600 dark:bg-orange-500/15 dark:text-orange-400"
-        : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+    `flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${isActive
+      ? "bg-orange-50 font-semibold text-orange-600 dark:bg-orange-500/15 dark:text-orange-400"
+      : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
     }`;
 
   return (
@@ -62,9 +61,8 @@ const AdminSidebar = ({ sidebarOpen, setSidebarOpen }) => {
 
       {/* Sidebar Panel */}
       <aside
-        className={`fixed top-16 left-0 z-50 h-[calc(100vh-4rem)] w-64 border-r border-slate-200/80 bg-white text-slate-800 transition-all duration-300 ease-in-out dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 overflow-y-auto ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`fixed top-16 left-0 z-50 h-[calc(100vh-4rem)] w-64 border-r border-slate-200/80 bg-white text-slate-800 transition-all duration-300 ease-in-out dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 overflow-y-auto ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
       >
         <nav className="p-3 space-y-1">
           {/* Dashboard */}
@@ -72,7 +70,7 @@ const AdminSidebar = ({ sidebarOpen, setSidebarOpen }) => {
             to="/admin/dashboard"
             end
             className={menuClass}
-            onClick={handleLinkClick}
+            onClick={() => showUnavailable(navigate)}
           >
             <LayoutDashboard size={19} />
             <span>Dashboard</span>
@@ -82,7 +80,7 @@ const AdminSidebar = ({ sidebarOpen, setSidebarOpen }) => {
           <NavLink
             to="/admin/users"
             className={menuClass}
-            onClick={handleLinkClick}
+            onClick={() => showUnavailable(navigate)}
           >
             <Users size={19} />
             <span>Users</span>
@@ -232,7 +230,7 @@ const AdminSidebar = ({ sidebarOpen, setSidebarOpen }) => {
                   to="/admin/fares"
                   end
                   className={subMenuClass}
-                  onClick={handleLinkClick}
+                  onClick={() => showUnavailable(navigate)}
                 >
                   Fare List
                 </NavLink>
@@ -312,7 +310,7 @@ const AdminSidebar = ({ sidebarOpen, setSidebarOpen }) => {
                   to="/admin/notifications"
                   end
                   className={subMenuClass}
-                  onClick={handleLinkClick}
+                  onClick={() => showUnavailable(navigate)}
                 >
                   Notification List
                 </NavLink>
@@ -332,7 +330,7 @@ const AdminSidebar = ({ sidebarOpen, setSidebarOpen }) => {
           <NavLink
             to="/admin/feedbacks"
             className={menuClass}
-            onClick={handleLinkClick}
+            onClick={() => showUnavailable(navigate)}
           >
             <MessageSquare size={19} />
             <span>Feedbacks</span>
@@ -342,7 +340,7 @@ const AdminSidebar = ({ sidebarOpen, setSidebarOpen }) => {
           <div className="pt-4 mt-2 border-t border-slate-200 dark:border-slate-800">
             <button
               type="button"
-              onClick={handleLogout}
+              // onClick={handleLogout}
               className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 dark:text-rose-400 dark:hover:bg-rose-950/30 transition-colors"
             >
               <LogOut size={19} />

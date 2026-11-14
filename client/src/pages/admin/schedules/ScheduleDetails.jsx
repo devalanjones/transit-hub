@@ -23,7 +23,7 @@ import ErrorMessage from "../../../components/common/ErrorMessage";
 import EmptyState from "../../../components/common/EmptyState";
 import Button from "../../../components/common/Button";
 import FormattedTime from "../../../components/common/FormattedTime";
-import ScheduleMap from "../../../components/shedule/ScheduleMap";
+import ScheduleMap from "../../../components/admin/AdminScheduleMap";
 
 const ScheduleDetails = () => {
   const { id } = useParams();
@@ -221,8 +221,8 @@ const ScheduleDetails = () => {
             <div className="mt-1.5 flex items-center">
               <span
                 className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${bus?.status === "active"
-                    ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"
-                    : "bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400"
+                  ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"
+                  : "bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400"
                   }`}
               >
                 <span
@@ -263,6 +263,8 @@ const ScheduleDetails = () => {
 
         <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800">
           <ScheduleMap
+            source={route?.source}
+            destination={route?.destination}
             stops={sortedStops}
             routeGeometry={schedule.routeGeometry}
           />

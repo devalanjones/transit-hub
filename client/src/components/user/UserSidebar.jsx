@@ -6,9 +6,11 @@ import {
     User,
     LogOut,
 } from "lucide-react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
+import showUnavailable from "../../utils/showUnavailabe";
 
 const UserSidebar = ({ sidebarOpen, setSidebarOpen }) => {
+    let navigate = useNavigate();
     return (
         <aside
             className={`fixed left-0 top-[76px] z-50 h-[calc(100vh-76px)] w-64
@@ -40,7 +42,7 @@ const UserSidebar = ({ sidebarOpen, setSidebarOpen }) => {
                 {/* Bus Schedule */}
                 <NavLink
                     to="/user/schedules"
-                    onClick={() => setSidebarOpen(false)}
+                    onClick={() => { setSidebarOpen(false); showUnavailable(navigate); }}
                     className={({ isActive }) =>
                         `flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition ${isActive
                             ? "bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400"
@@ -55,7 +57,7 @@ const UserSidebar = ({ sidebarOpen, setSidebarOpen }) => {
                 {/* Notifications */}
                 <NavLink
                     to="/user/notifications"
-                    onClick={() => setSidebarOpen(false)}
+                    onClick={() => { setSidebarOpen(false); showUnavailable(navigate); }}
                     className={({ isActive }) =>
                         `flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition ${isActive
                             ? "bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400"
@@ -70,7 +72,7 @@ const UserSidebar = ({ sidebarOpen, setSidebarOpen }) => {
                 {/* Feedback */}
                 <NavLink
                     to="/user/feedback"
-                    onClick={() => setSidebarOpen(false)}
+                    onClick={() => { setSidebarOpen(false); showUnavailable(navigate); }}
                     className={({ isActive }) =>
                         `flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition ${isActive
                             ? "bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400"
@@ -85,7 +87,7 @@ const UserSidebar = ({ sidebarOpen, setSidebarOpen }) => {
                 {/* Profile */}
                 <NavLink
                     to="/user/profile"
-                    onClick={() => setSidebarOpen(false)}
+                    onClick={() => { setSidebarOpen(false); showUnavailable(navigate); }}
                     className={({ isActive }) =>
                         `flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition ${isActive
                             ? "bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400"
