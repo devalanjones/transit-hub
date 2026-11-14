@@ -18,6 +18,7 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
+const userRouter = require("./routes/userRoutes");
 const busRouter = require("./routes/busRoutes");
 const routeRouter = require("./routes/routeRoutes");
 const stopRouter = require("./routes/stopRoutes");
@@ -28,6 +29,7 @@ const riderLocationRouter = require("./routes/riderLocationRoutes");
 const trackingRouter = require("./routes/trackingRoutes");
 const notificationRouter = require("./routes/notificationRoutes");
 
+app.use("/users", userRouter);
 app.use("/buses", busRouter);
 app.use("/routes", routeRouter);
 app.use("/stops", stopRouter);
