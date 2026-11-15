@@ -197,6 +197,29 @@ let getRouteGeometryByStops = async (req, res) => {
   }
 };
 
+let getRouteGeometryByCoordinates = async (req, res) => {
+  try {
+    const { source, stops, destination } = req.body;
+
+    const routeGeometry =
+      await scheduleService.getRouteGeometryByCoordinates({
+        source,
+        stops,
+        destination,
+      });
+
+    return res.status(200).json({
+      success: true,
+      data: routeGeometry,
+    });
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 const searchSchedules = async (req, res) => {
 
   try {
@@ -233,5 +256,6 @@ module.exports = {
   getSchedulesByStop,
   getCandidateStopsByRoute,
   getRouteGeometryByStops,
+  getRouteGeometryByCoordinates,
   searchSchedules,
 };

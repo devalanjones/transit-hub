@@ -7,6 +7,7 @@ const Button = ({
   className = "",
   disabled = false,
   loading = false,
+  loadingText = "Loading...",
 }) => {
   // Base sizing tokens
   const sizes = {
@@ -69,7 +70,7 @@ const Button = ({
       {loading ? (
         <>
           <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-          <span>Loading...</span>
+          <span>{loadingText}</span>
         </>
       ) : (
         children

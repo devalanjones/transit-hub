@@ -584,6 +584,7 @@ const CreateSchedule = () => {
               variant="primary"
               disabled={loading}
               loading={loading}
+              loadingText="Creating..."
             >
               Create Schedule
             </Button>

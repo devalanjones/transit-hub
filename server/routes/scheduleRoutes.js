@@ -16,6 +16,7 @@ const {
   getSchedulesByStop,
   getCandidateStopsByRoute,
   getRouteGeometryByStops,
+  getRouteGeometryByCoordinates,
   searchSchedules,
 } = require("../controllers/scheduleController");
 
@@ -28,6 +29,7 @@ router.get("/route/:routeId/schedules", getSchedulesByRoute);
 router.get("/route/:routeId/candidate-stops", getCandidateStopsByRoute);
 router.get("/stop/:stopId/schedules", getSchedulesByStop);
 router.post("/route-geometry", getRouteGeometryByStops);
+router.post("/route-geometry/coordinates", getRouteGeometryByCoordinates);
 
 // Standard CRUD endpoints
 router.post("/", validateSchedule, createSchedule);

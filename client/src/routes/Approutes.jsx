@@ -19,9 +19,10 @@ import ScheduleDetails from "../pages/admin/schedules/ScheduleDetails";
 import CreateSchedule from "../pages/admin/schedules/CreateSchedule";
 import UpdateSchedule from "../pages/admin/schedules/UpdateSchedule";
 import UserList from "../pages/admin/user/UserList";
-import UserLayout from "../components/users/UserLayout";
+import UserLayout from "../components/user/UserLayout";
 import Home from "../pages/user/Home";
 import BusSchedule from "../pages/user/BusSchedule";
+import BusScheduleDetails from "../pages/user/BusScheduleDetails";
 
 
 const AppRoutes = () => {
@@ -79,6 +80,8 @@ const AppRoutes = () => {
                 <Route path={""} element={<Home />} />
 
                 <Route path={"bus-schedule"} element={<BusSchedule />} />
+
+                <Route path={"busScheduleDetails/:scheduleId"} element={<BusScheduleDetails />} />
 
             </Route>
 
