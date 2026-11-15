@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const riderLocationController = require("../controllers/riderLocationController");
-const validate = require("../middlewares/validateLiveLocation");
+const validate = require("../middlewares/validate");
 const { pingLocationSchema } = require("../validations/riderLocationValidation");
 // const authMiddleware = require("../middlewares/auth.middleware"); // JWT auth
 
