@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { getScheduleById, getRouteGeometryByCoordinates } from "../../services/scheduleService";
 import { getAllBusTypes, calculateFare } from "../../services/fareService";
-import { BusFront, Route, MapPin, Gauge, Clock, RefreshCw, Play, Square, Bus, ArrowLeft, IndianRupee } from "lucide-react"
+import { BusFront, Route, MapPin, Gauge, Clock, RefreshCw, Play, Square, Bus, ArrowLeft, IndianRupee, Minus, Plus, Star } from "lucide-react"
 import Button from "../../components/common/Button";
 import Loading from "../../components/common/Loading";
 import ErrorMessage from "../../components/common/ErrorMessage";
@@ -180,6 +180,10 @@ const BusScheduleDetails = () => {
     const [passengers, setPassengers] = useState(1);
     const [fareLoading, setFareLoading] = useState(false);
     const [fareError, setFareError] = useState("");
+    const [feedbackRating, setFeedbackRating] = useState(0);
+    const [feedbackMessage, setFeedbackMessage] = useState("");
+    const [feedbackSuccess, setFeedbackSuccess] = useState(false);
+    const [feedbackError, setFeedbackError] = useState("");
 
     const selectedFrom = searchParams.get("from") || "";
     const selectedTo = searchParams.get("to") || "";
@@ -704,6 +708,31 @@ const BusScheduleDetails = () => {
 
         fetchFareDetails();
     }, [schedule, busType, selectedJourneyDistance, passengers]);
+
+    const handleFeedbackSubmit = (e) => {
+        e.preventDefault();
+
+        setFeedbackError("");
+        setFeedbackSuccess(false);
+
+        // Require at least one field
+        if (feedbackRating === 0 && !feedbackMessage.trim()) {
+            setFeedbackError(
+                "Please select a star rating or enter a feedback message."
+            );
+            return;
+        }
+
+        // Frontend-only preview for now
+        console.log("Feedback Preview:", {
+            rating: feedbackRating || null,
+            message: feedbackMessage.trim(),
+        });
+
+        setFeedbackSuccess(true);
+        setFeedbackRating(0);
+        setFeedbackMessage("");
+    };
 
     if (loading) {
         return <Loading />;
@@ -1591,7 +1620,7 @@ const BusScheduleDetails = () => {
             {/* 7. Fare Details */}
             <section className="relative isolate overflow-hidden rounded-2xl border border-amber-200/70 bg-gradient-to-br from-white via-amber-50/40 to-orange-50/60 shadow-[0_12px_30px_rgba(180,83,9,0.12)] dark:border-amber-900/40 dark:from-[#151b25] dark:via-[#1b2029] dark:to-[#211d1a]">
 
-                {/* Decorative Background */}
+                {/* Background Design */}
                 <div className="absolute -right-12 -top-12 h-36 w-36 rounded-full bg-amber-300/20 blur-3xl" />
                 <div className="absolute -bottom-12 -left-12 h-36 w-36 rounded-full bg-orange-300/20 blur-3xl" />
 
@@ -1613,208 +1642,306 @@ const BusScheduleDetails = () => {
                                 Estimated fare for your selected journey
                             </p>
                         </div>
-
                     </div>
 
                     {/* Content */}
                     <div className="space-y-5 p-5">
 
-                        {/* Loading */}
                         {fareLoading ? (
                             <Loading />
                         ) : fareError ? (
-
-                            /* Error */
                             <ErrorMessage message={fareError} />
-
                         ) : fareDetails ? (
-
                             <>
 
-                                {/* Bus Type and Journey Distance */}
-                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                {/* Selected Journey Distance */}
+                                <div className="rounded-xl border border-amber-200 bg-white/80 p-4 dark:border-amber-900/40 dark:bg-[#202630]">
 
-                                    {/* Bus Type */}
-                                    <div className="rounded-xl border border-amber-200/70 bg-white/80 p-4 shadow-[0_4px_0_rgba(217,119,6,0.12)] dark:border-amber-900/40 dark:bg-[#202631]">
+                                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                        Selected Journey Distance
+                                    </p>
 
-                                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                                            Bus Type
-                                        </p>
-
-                                        <p className="mt-2 font-bold text-gray-800 dark:text-white">
-                                            {fareDetails.busType}
-                                        </p>
-
-                                    </div>
-
-                                    {/* Distance */}
-                                    <div className="rounded-xl border border-orange-200/70 bg-white/80 p-4 shadow-[0_4px_0_rgba(234,88,12,0.12)] dark:border-orange-900/40 dark:bg-[#202631]">
-
-                                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                                            Selected Journey Distance
-                                        </p>
-
-                                        <p className="mt-2 font-bold text-gray-800 dark:text-white">
-                                            {fareDetails.distanceInKm} km
-                                        </p>
-
-                                    </div>
-
+                                    <p className="mt-1 text-2xl font-bold text-amber-600 dark:text-amber-400">
+                                        {Number(fareDetails.distanceInKm).toFixed(2)} km
+                                    </p>
                                 </div>
 
                                 {/* Passenger Count */}
-                                <div className="rounded-xl border border-amber-200/70 bg-white/80 p-4 shadow-[0_4px_0_rgba(217,119,6,0.12)] dark:border-amber-900/40 dark:bg-[#202631]">
+                                <div className="flex items-center justify-between rounded-xl border border-amber-200 bg-white/80 p-4 dark:border-amber-900/40 dark:bg-[#202630]">
 
-                                    <div className="flex flex-wrap items-center justify-between gap-3">
+                                    <div>
+                                        <p className="font-semibold text-gray-800 dark:text-white">
+                                            Passenger Count
+                                        </p>
 
-                                        <div>
-                                            <p className="font-semibold text-gray-800 dark:text-white">
-                                                Passengers
-                                            </p>
-
-                                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                Select passenger count
-                                            </p>
-                                        </div>
-
-                                        <div className="flex items-center gap-3">
-
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    setPassengers((prev) =>
-                                                        Math.max(1, prev - 1)
-                                                    )
-                                                }
-                                                disabled={passengers <= 1}
-                                                className="flex h-9 w-9 items-center justify-center rounded-lg border border-amber-300 text-amber-700 disabled:cursor-not-allowed disabled:opacity-40 dark:border-amber-800 dark:text-amber-400"
-                                            >
-                                                -
-                                            </button>
-
-                                            <span className="min-w-6 text-center font-bold text-gray-900 dark:text-white">
-                                                {passengers}
-                                            </span>
-
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    setPassengers((prev) => prev + 1)
-                                                }
-                                                className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-[0_3px_0_#b45309]"
-                                            >
-                                                +
-                                            </button>
-
-                                        </div>
-
+                                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                            Select the number of passengers
+                                        </p>
                                     </div>
 
+                                    <div className="flex items-center gap-3">
+
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setPassengers((previous) =>
+                                                    Math.max(1, previous - 1)
+                                                )
+                                            }
+                                            disabled={passengers <= 1}
+                                            className="flex h-9 w-9 items-center justify-center rounded-lg border border-amber-300 bg-amber-50 text-amber-700 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-400"
+                                            aria-label="Decrease passenger count"
+                                        >
+                                            <Minus size={16} />
+                                        </button>
+
+                                        <span className="min-w-6 text-center text-lg font-bold text-gray-900 dark:text-white">
+                                            {passengers}
+                                        </span>
+
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setPassengers((previous) => previous + 1)
+                                            }
+                                            className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-md transition hover:from-amber-600 hover:to-orange-700"
+                                            aria-label="Increase passenger count"
+                                        >
+                                            <Plus size={16} />
+                                        </button>
+
+                                    </div>
                                 </div>
 
                                 {/* Fare Breakdown */}
-                                <div className="rounded-xl border border-amber-200/70 bg-white/80 p-4 shadow-[0_4px_0_rgba(217,119,6,0.12)] dark:border-amber-900/40 dark:bg-[#202631]">
+                                <div className="space-y-3 rounded-xl border border-amber-200 bg-white/80 p-4 dark:border-amber-900/40 dark:bg-[#202630]">
 
-                                    <h3 className="mb-4 font-bold text-gray-800 dark:text-white">
+                                    <h3 className="font-semibold text-gray-800 dark:text-white">
                                         Fare Breakdown
                                     </h3>
 
-                                    <div className="space-y-3 text-sm">
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-500 dark:text-gray-400">
+                                            Base Fare
+                                        </span>
 
-                                        {/* Base Fare */}
-                                        <div className="flex justify-between gap-3">
-                                            <span className="text-gray-500 dark:text-gray-400">
-                                                Base Fare
-                                            </span>
+                                        <span className="font-semibold text-gray-800 dark:text-gray-200">
+                                            ₹{Math.ceil(Number(fareDetails.baseFare))}
+                                        </span>
+                                    </div>
 
-                                            <span className="font-semibold text-gray-800 dark:text-white">
-                                                ₹{fareDetails.baseFare}
-                                            </span>
-                                        </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-500 dark:text-gray-400">
+                                            Fare Per KM
+                                        </span>
 
-                                        {/* Fare Per KM */}
-                                        <div className="flex justify-between gap-3">
-                                            <span className="text-gray-500 dark:text-gray-400">
-                                                Fare Per KM
-                                            </span>
+                                        <span className="font-semibold text-gray-800 dark:text-gray-200">
+                                            ₹{Math.ceil(Number(fareDetails.farePerKm))}
+                                        </span>
+                                    </div>
 
-                                            <span className="font-semibold text-gray-800 dark:text-white">
-                                                ₹{fareDetails.farePerKm}
-                                            </span>
-                                        </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-500 dark:text-gray-400">
+                                            Fare Per Passenger
+                                        </span>
 
-                                        {/* Passengers */}
-                                        <div className="flex justify-between gap-3">
-                                            <span className="text-gray-500 dark:text-gray-400">
-                                                Passengers
-                                            </span>
+                                        <span className="font-semibold text-gray-800 dark:text-gray-200">
+                                            ₹{Math.ceil(Number(fareDetails.farePerPassenger))}
+                                        </span>
+                                    </div>
 
-                                            <span className="font-semibold text-gray-800 dark:text-white">
-                                                {fareDetails.passengers}
-                                            </span>
-                                        </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-500 dark:text-gray-400">
+                                            Number of Passengers
+                                        </span>
 
-                                        {/* Fare Per Passenger */}
-                                        <div className="border-t border-dashed border-amber-300 pt-3 dark:border-amber-900">
-
-                                            <div className="flex justify-between gap-3">
-
-                                                <span className="font-semibold text-gray-700 dark:text-gray-300">
-                                                    Fare Per Passenger
-                                                </span>
-
-                                                <span className="font-bold text-gray-900 dark:text-white">
-                                                    ₹{Number(fareDetails.farePerPassenger).toFixed(2)}
-                                                </span>
-
-                                            </div>
-
-                                        </div>
-
+                                        <span className="font-semibold text-gray-800 dark:text-gray-200">
+                                            {fareDetails.passengers}
+                                        </span>
                                     </div>
 
                                 </div>
 
                                 {/* Total Fare */}
-                                <div className="rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 p-5 text-white shadow-[0_5px_0_#b45309]">
+                                <div className="rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 p-4 text-white shadow-lg">
 
-                                    <p className="text-sm font-medium text-amber-50">
-                                        Total Estimated Fare
-                                    </p>
+                                    <div className="flex items-center justify-between">
 
-                                    <div className="mt-2 flex items-center justify-between gap-3">
+                                        <div>
+                                            <p className="text-sm font-medium text-amber-50">
+                                                Total Estimated Fare
+                                            </p>
 
-                                        <p className="text-3xl font-extrabold">
-                                            ₹{Number(fareDetails.totalFare).toFixed(2)}
+                                            <p className="mt-1 text-xs text-amber-100">
+                                                For {fareDetails.passengers} passenger
+                                                {fareDetails.passengers > 1 ? "s" : ""}
+                                            </p>
+                                        </div>
+
+                                        <p className="text-3xl font-bold">
+                                            ₹{Math.ceil(Number(fareDetails.totalFare))}
                                         </p>
 
-                                        <IndianRupee size={30} className="opacity-80" />
-
                                     </div>
-
                                 </div>
 
-                                {/* Note */}
-                                <p className="text-xs text-gray-500 dark:text-gray-400">
-                                    * This is an estimated fare based on the selected journey distance and passenger count.
+                            </>
+                        ) : (
+                            <div className="rounded-xl border border-dashed border-amber-300 p-6 text-center dark:border-amber-900">
+
+                                <IndianRupee
+                                    size={30}
+                                    className="mx-auto mb-2 text-amber-500"
+                                />
+
+                                <p className="font-medium text-gray-700 dark:text-gray-300">
+                                    Select a valid journey to view fare details.
                                 </p>
 
-                            </>
-
-                        ) : (
-
-                            /* Empty State */
-                            <div className="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-                                Select a valid journey to view fare details.
                             </div>
-
                         )}
 
                     </div>
+                </div>
+            </section>
+
+            {/* 8. Feedback */}
+            <section className="relative isolate overflow-hidden rounded-2xl border border-amber-200/70 bg-gradient-to-br from-white via-amber-50/40 to-orange-50/60 p-5 shadow-[0_12px_30px_rgba(180,83,9,0.12)] dark:border-amber-900/40 dark:from-[#151b25] dark:via-[#1b2029] dark:to-[#211d1a]">
+
+                {/* 3D Background Decorations */}
+                <div className="pointer-events-none absolute -right-12 -top-12 h-36 w-36 rounded-full bg-amber-300/20 blur-3xl" />
+                <div className="pointer-events-none absolute -bottom-12 -left-12 h-36 w-36 rounded-full bg-orange-300/20 blur-3xl" />
+
+                <div className="relative z-10">
+
+                    {/* Header */}
+                    <div className="mb-6 flex items-center gap-3 border-b border-amber-200/70 pb-5 dark:border-amber-900/40">
+
+                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-[0_5px_0_#b45309]">
+                            <Star size={23} />
+                        </div>
+
+                        <div>
+                            <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+                                Feedback
+                            </h2>
+
+                            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                Share your experience about this journey
+                            </p>
+                        </div>
+
+                    </div>
+
+                    {/* Feedback Form */}
+                    <form
+                        onSubmit={handleFeedbackSubmit}
+                        className="space-y-5"
+                    >
+
+                        {/* Star Rating */}
+                        <div className="rounded-xl border border-amber-200 bg-white/80 p-4 dark:border-amber-900/40 dark:bg-[#202630]">
+
+                            <p className="text-center font-semibold text-gray-800 dark:text-white">
+                                How was your journey?
+                            </p>
+
+                            <div className="mt-4 flex justify-center gap-2">
+
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                    <button
+                                        key={star}
+                                        type="button"
+                                        onClick={() => {
+                                            setFeedbackRating(star);
+                                            setFeedbackError("");
+                                            setFeedbackSuccess(false);
+                                        }}
+                                        className="rounded-lg p-1 transition duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                                        aria-label={`Rate ${star} out of 5 stars`}
+                                    >
+                                        <Star
+                                            size={32}
+                                            className={`transition-colors ${star <= feedbackRating
+                                                ? "fill-amber-400 text-amber-500"
+                                                : "text-gray-300 dark:text-gray-600"
+                                                }`}
+                                        />
+                                    </button>
+                                ))}
+
+                            </div>
+
+                            <p className="mt-3 text-center text-xs text-gray-500 dark:text-gray-400">
+                                {feedbackRating === 0
+                                    ? "Select a rating from 1 to 5 stars"
+                                    : `You rated this journey ${feedbackRating} out of 5`}
+                            </p>
+
+                        </div>
+
+                        {/* Feedback Message */}
+                        <div className="space-y-2">
+
+                            <label
+                                htmlFor="feedbackMessage"
+                                className="block text-sm font-semibold text-gray-800 dark:text-white"
+                            >
+                                Your Feedback
+                            </label>
+
+                            <textarea
+                                id="feedbackMessage"
+                                value={feedbackMessage}
+                                onChange={(e) => {
+                                    setFeedbackMessage(e.target.value);
+                                    setFeedbackError("");
+                                    setFeedbackSuccess(false);
+                                }}
+                                placeholder="Write your experience about this journey..."
+                                rows={4}
+                                maxLength={500}
+                                className="w-full resize-none rounded-xl border border-amber-200 bg-white/80 p-4 text-sm text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 dark:border-amber-900/40 dark:bg-[#202630] dark:text-white dark:placeholder:text-gray-500"
+                            />
+
+                            <p className="text-right text-xs text-gray-400">
+                                {feedbackMessage.length}/500 characters
+                            </p>
+
+                        </div>
+
+                        {/* Validation Error */}
+                        {feedbackError && (
+                            <p className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-600 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-400">
+                                {feedbackError}
+                            </p>
+                        )}
+
+                        {/* Success Message */}
+                        {feedbackSuccess && (
+                            <p className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm font-medium text-green-700 dark:border-green-900/40 dark:bg-green-950/20 dark:text-green-400">
+                                Feedback captured successfully for preview. It has not been saved to the database yet.
+                            </p>
+                        )}
+
+                        {/* Submit Button */}
+                        <div className="flex justify-end">
+
+                            <button
+                                type="submit"
+                                className="flex items-center gap-2 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 px-6 py-3 text-sm font-bold text-white shadow-[0_4px_0_#b45309,0_7px_14px_rgba(180,83,9,0.20)] transition hover:-translate-y-0.5 hover:from-amber-600 hover:to-orange-700 active:translate-y-1 active:shadow-none"
+                            >
+                                <Star size={17} />
+                                Submit Feedback
+                            </button>
+
+                        </div>
+
+                    </form>
 
                 </div>
-
             </section>
+
 
         </div>
     )
