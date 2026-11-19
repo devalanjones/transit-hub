@@ -10,6 +10,7 @@ import ErrorMessage from "../../../components/common/ErrorMessage";
 import Button from "../../../components/common/Button";
 import Input from "../../../components/common/Input";
 import FormattedTime from "../../../components/common/FormattedTime";
+import Loading from "../../../components/common/Loading";
 import createScheduleSchema from "../../../validations/schedule/createScheduleSchema";
 import { getAllBuses } from "../../../services/busService";
 import { getAllRoutes } from "../../../services/routeService";
@@ -44,6 +45,8 @@ const CreateSchedule = () => {
   const [routes, setRoutes] = useState([]);
   const [stops, setStops] = useState([]);
   const [selectedStops, setSelectedStops] = useState([]);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isLoadingStops, setIsLoadingStops] = useState(false);
   const [loading, setLoading] = useState(false);
   const [draggedIndex, setDraggedIndex] = useState(null);
 
@@ -73,6 +76,7 @@ const CreateSchedule = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setIsInitialLoading(true);
         const [busResponse, routeResponse] = await Promise.all([
           getAllBuses(),
           getAllRoutes(),
@@ -84,6 +88,8 @@ const CreateSchedule = () => {
         toast.error(
           error.response?.data?.message || "Failed to load buses and routes",
         );
+      } finally {
+        setIsInitialLoading(false);
       }
     };
 
@@ -104,12 +110,15 @@ const CreateSchedule = () => {
     if (!routeId) return;
 
     try {
+      setIsLoadingStops(true);
       const response = await getCandidateStopsByRoute(routeId);
       setStops(response.data?.data || []);
     } catch (error) {
       toast.error(
         error.response?.data?.message || "Failed to load candidate stops",
       );
+    } finally {
+      setIsLoadingStops(false);
     }
   };
 
@@ -227,7 +236,6 @@ const CreateSchedule = () => {
           ...stop,
           expectedArrivalTime: toIsoDateTime(stop.expectedArrivalTime),
         })),
-
         routeGeometry: routeResponse.data.data.geometry,
       };
 
@@ -260,6 +268,10 @@ const CreateSchedule = () => {
       value: stop._id,
       label: stop.stopName,
     }));
+
+  if (isInitialLoading) {
+    return <Loading message="Loading schedule form..." />;
+  }
 
   return (
     <div className="space-y-6">
@@ -318,6 +330,7 @@ const CreateSchedule = () => {
               })}
               placeholder="Select Route"
               options={routeOptions}
+              disabled={isLoadingStops}
               error={Boolean(errors.routeId)}
             />
             {errors.routeId && (
@@ -331,117 +344,134 @@ const CreateSchedule = () => {
               Stops
             </h2>
 
-            <div>
-              <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-100">
-                Available Stops
-              </h3>
-
-              <Select
-                key={availableStopOptions.map((stop) => stop.value).join("-")}
-                id="stopId"
-                value=""
-                placeholder="Select Stop"
-                options={availableStopOptions}
-                disabled={availableStopOptions.length === 0}
-                onChange={(event) => {
-                  const stop = stops.find((s) => s._id === event.target.value);
-                  if (stop) handleStopChange(stop);
-                }}
+            {isLoadingStops ? (
+              <Loading
+                size="sm"
+                message="Loading stops..."
+                className="h-44 rounded-xl border border-dashed border-slate-200 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-950/40"
               />
-            </div>
+            ) : (
+              <>
+                <div>
+                  <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-100">
+                    Available Stops
+                  </h3>
 
-            <div className="mt-6">
-              <div className="mb-3 flex items-center">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-100">
-                  Selected Stops
-                </h3>
-                <span className="ml-auto w-40 text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-100">
-                  Expected Arrival Time
-                </span>
-              </div>
+                  <Select
+                    key={availableStopOptions
+                      .map((stop) => stop.value)
+                      .join("-")}
+                    id="stopId"
+                    value=""
+                    placeholder="Select Stop"
+                    options={availableStopOptions}
+                    disabled={availableStopOptions.length === 0}
+                    onChange={(event) => {
+                      const stop = stops.find(
+                        (s) => s._id === event.target.value,
+                      );
+                      if (stop) handleStopChange(stop);
+                    }}
+                  />
+                </div>
 
-              {selectedStops.length > 0 ? (
-                <div className="space-y-2">
-                  {selectedStops.map((stop, index) => {
-                    const currentStopVal =
-                      watchedStops[index]?.expectedArrivalTime;
+                <div className="mt-6">
+                  <div className="mb-3 flex items-center">
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-100">
+                      Selected Stops
+                    </h3>
+                    <span className="ml-auto w-40 text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-100">
+                      Expected Arrival Time
+                    </span>
+                  </div>
 
-                    return (
-                      <div
-                        key={stop._id}
-                        draggable
-                        onDragStart={() => setDraggedIndex(index)}
-                        onDragOver={(event) => event.preventDefault()}
-                        onDrop={() => handleDrop(index)}
-                        className="flex items-center gap-4 rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 transition hover:border-slate-300 dark:border-slate-800 dark:bg-slate-950/40 dark:hover:border-slate-700"
-                      >
-                        <span className="cursor-grab text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300">
-                          <GripVertical size={18} />
-                        </span>
+                  {selectedStops.length > 0 ? (
+                    <div className="space-y-2">
+                      {selectedStops.map((stop, index) => {
+                        const currentStopVal =
+                          watchedStops[index]?.expectedArrivalTime;
 
-                        <span className="w-8 font-semibold text-slate-700 dark:text-slate-200">
-                          {index + 1}
-                        </span>
+                        return (
+                          <div
+                            key={stop._id}
+                            draggable
+                            onDragStart={() => setDraggedIndex(index)}
+                            onDragOver={(event) => event.preventDefault()}
+                            onDrop={() => handleDrop(index)}
+                            className="flex items-center gap-4 rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 transition hover:border-slate-300 dark:border-slate-800 dark:bg-slate-950/40 dark:hover:border-slate-700"
+                          >
+                            <span className="cursor-grab text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300">
+                              <GripVertical size={18} />
+                            </span>
 
-                        <span className="flex-1 font-medium text-slate-800 dark:text-slate-100">
-                          {stop.stopName}
-                        </span>
+                            <span className="w-8 font-semibold text-slate-700 dark:text-slate-200">
+                              {index + 1}
+                            </span>
 
-                        <Button
-                          type="button"
-                          variant="danger"
-                          size="sm"
-                          onClick={() => handleStopChange(stop)}
-                          className="px-3 py-1 text-xs"
-                        >
-                          <Trash2 size={14} className="sm:hidden" />
-                          <span className="hidden sm:inline">Remove</span>
-                        </Button>
+                            <span className="flex-1 font-medium text-slate-800 dark:text-slate-100">
+                              {stop.stopName}
+                            </span>
 
-                        <div className="w-40">
-                          <Input
-                            type="time"
-                            {...register(`stops.${index}.expectedArrivalTime`)}
-                            error={Boolean(
-                              errors.stops?.[index]?.expectedArrivalTime,
-                            )}
-                            className="py-1.5 text-xs dark:text-white"
-                          />
+                            <Button
+                              type="button"
+                              variant="danger"
+                              size="sm"
+                              onClick={() => handleStopChange(stop)}
+                              className="px-3 py-1 text-xs"
+                            >
+                              <Trash2 size={14} className="sm:hidden" />
+                              <span className="hidden sm:inline">Remove</span>
+                            </Button>
 
-                          {/* Live Formatted Stop Time Preview */}
-                          {currentStopVal && (
-                            <div className="mt-1">
-                              <FormattedTime
-                                value={currentStopVal}
-                                className="text-xs font-semibold text-orange-600 dark:text-orange-400"
+                            <div className="w-40">
+                              <Input
+                                type="time"
+                                {...register(
+                                  `stops.${index}.expectedArrivalTime`,
+                                )}
+                                error={Boolean(
+                                  errors.stops?.[index]?.expectedArrivalTime,
+                                )}
+                                className="py-1.5 text-xs dark:text-white"
                               />
+
+                              {/* Live Formatted Stop Time Preview */}
+                              {currentStopVal && (
+                                <div className="mt-1">
+                                  <FormattedTime
+                                    value={currentStopVal}
+                                    className="text-xs font-semibold text-orange-600 dark:text-orange-400"
+                                  />
+                                </div>
+                              )}
+
+                              {errors.stops?.[index]?.expectedArrivalTime && (
+                                <ErrorMessage
+                                  message={
+                                    errors.stops[index].expectedArrivalTime
+                                      .message
+                                  }
+                                />
+                              )}
                             </div>
-                          )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-slate-500 dark:text-slate-300">
+                      No stops selected
+                    </p>
+                  )}
 
-                          {errors.stops?.[index]?.expectedArrivalTime && (
-                            <ErrorMessage
-                              message={
-                                errors.stops[index].expectedArrivalTime.message
-                              }
-                            />
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
+                  {errors.stops && !Array.isArray(errors.stops) && (
+                    <div className="mt-2">
+                      <ErrorMessage message={errors.stops.message} />
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <p className="text-sm text-slate-500 dark:text-slate-300">
-                  No stops selected
-                </p>
-              )}
-
-              {errors.stops && !Array.isArray(errors.stops) && (
-                <div className="mt-2">
-                  <ErrorMessage message={errors.stops.message} />
-                </div>
-              )}
-            </div>
+              </>
+            )}
           </div>
 
           {/* 4. Days */}
@@ -582,7 +612,7 @@ const CreateSchedule = () => {
             <Button
               type="submit"
               variant="primary"
-              disabled={loading}
+              disabled={loading || isLoadingStops}
               loading={loading}
               loadingText="Creating..."
             >
