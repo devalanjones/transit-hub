@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { getScheduleById, getRouteGeometryByCoordinates } from "../../services/scheduleService";
 import { getAllBusTypes, calculateFare } from "../../services/fareService";
-import { BusFront, Route, MapPin, Gauge, Clock, RefreshCw, Play, Square, Bus, ArrowLeft, IndianRupee, Minus, Plus, Star } from "lucide-react"
+import { BusFront, Route, MapPin, Gauge, Clock, RefreshCw, Play, Square, Bus, ArrowLeft, IndianRupee, Minus, Plus, Star, CalendarDays } from "lucide-react"
 import Button from "../../components/common/Button";
 import Loading from "../../components/common/Loading";
 import ErrorMessage from "../../components/common/ErrorMessage";
@@ -159,6 +159,16 @@ const calculateJourneyDuration = (startTime, endTime) => {
     return `${hours} hr ${minutes} min`;
 };
 
+const weekDays = [
+    { key: "Monday", letter: "MON" },
+    { key: "Tuesday", letter: "TUE" },
+    { key: "Wednesday", letter: "WED" },
+    { key: "Thursday", letter: "THU" },
+    { key: "Friday", letter: "FRI" },
+    { key: "Saturday", letter: "SAT" },
+    { key: "Sunday", letter: "SUN" },
+];
+
 const BusScheduleDetails = () => {
 
     const { scheduleId } = useParams();
@@ -227,21 +237,17 @@ const BusScheduleDetails = () => {
             try {
                 const response = await getLatestBusLocation(busId);
 
-                console.log("Latest GPS response:", response.data);
-
                 const locationData =
                     response.data.data ||
                     response.data.location ||
                     response.data;
 
                 if (isMounted) {
-                    console.log("Latest bus location:", locationData);
                     setLiveLocation(locationData);
                 }
             } catch (error) {
                 if (error.response?.status === 404) {
                     setLiveLocation(null);
-                    console.log("No GPS location available yet");
                 } else {
                     console.error("Failed to fetch latest bus location:", error);
                 }
@@ -254,7 +260,6 @@ const BusScheduleDetails = () => {
             if (data.busId && String(data.busId) !== String(busId)) return;
 
             if (isMounted) {
-                console.log("Socket location update:", data);
                 setLiveLocation(data.location || data);
             }
         });
@@ -324,8 +329,6 @@ const BusScheduleDetails = () => {
                 const response = await getRouteGeometryByCoordinates(routeData);
 
                 setRouteGeometry(response.data.data);
-
-                console.log("User route geometry:", response.data.data);
 
             } catch (error) {
                 console.error("Failed to load user route geometry:", error);
@@ -723,12 +726,6 @@ const BusScheduleDetails = () => {
             return;
         }
 
-        // Frontend-only preview for now
-        console.log("Feedback Preview:", {
-            rating: feedbackRating || null,
-            message: feedbackMessage.trim(),
-        });
-
         setFeedbackSuccess(true);
         setFeedbackRating(0);
         setFeedbackMessage("");
@@ -745,8 +742,6 @@ const BusScheduleDetails = () => {
             />
         );
     }
-
-    console.log("Full schedule details:", schedule);
 
     return (
         <div className="space-y-6">
@@ -787,7 +782,7 @@ const BusScheduleDetails = () => {
                 </div>
 
                 {/* Bus Information Cards */}
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 
                     {/* Bus Number */}
                     <div className="rounded-xl border border-blue-200/80 bg-gradient-to-br from-white to-blue-50 p-4 shadow-[0_4px_0_#bfdbfe,0_7px_14px_rgba(37,99,235,0.08)] dark:border-blue-400/20 dark:from-slate-800 dark:to-blue-950/30 dark:shadow-[0_4px_0_rgba(30,64,175,0.25)]">
@@ -820,6 +815,49 @@ const BusScheduleDetails = () => {
                             {typeof busType === "object"
                                 ? busType.busType || "Not available"
                                 : busType || "Not available"}
+                        </p>
+                    </div>
+
+                    {/* Operating Days */}
+                    <div className="rounded-xl border border-emerald-200/80 bg-gradient-to-br from-white to-emerald-50 p-4 shadow-[0_4px_0_#a7f3d0,0_7px_14px_rgba(16,185,129,0.08)] dark:border-emerald-400/20 dark:from-slate-800 dark:to-emerald-950/30 dark:shadow-[0_4px_0_rgba(6,95,70,0.25)]">
+
+                        {/* Icon */}
+                        <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl border border-emerald-300/50 bg-gradient-to-br from-emerald-400 to-emerald-700 text-white shadow-[0_3px_0_#047857]">
+                            <CalendarDays size={18} />
+                        </div>
+
+                        {/* Title */}
+                        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                            Operating Days
+                        </p>
+
+                        {/* Days */}
+                        <div className="mt-4 flex flex-wrap items-center gap-2">
+                            {weekDays.map((day) => {
+                                const isRunning = (schedule.days || []).includes(day.key);
+
+                                return (
+                                    <span
+                                        key={day.key}
+                                        title={day.key}
+                                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ${isRunning
+                                            ? "bg-emerald-500 text-white shadow-[0_3px_0_#047857]"
+                                            : "bg-slate-100 text-slate-300 dark:bg-slate-700 dark:text-slate-500"
+                                            }`}
+                                    >
+                                        {day.letter}
+                                    </span>
+                                );
+                            })}
+                        </div>
+
+                        {/* Operating Day Text */}
+                        <p className="mt-3 text-sm font-semibold text-slate-700 dark:text-slate-300">
+                            {(schedule.days || []).length === 7
+                                ? "Running all days"
+                                : (schedule.days || []).length > 0
+                                    ? `${schedule.days.length} days per week`
+                                    : "No operating days available"}
                         </p>
                     </div>
 

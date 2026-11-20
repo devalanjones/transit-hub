@@ -66,8 +66,6 @@ const mapScheduleToBus = (schedule) => {
         `${route.source?.name || originStop.stopName || "Origin"}-${route.destination?.name || destinationStop.stopName || "Destination"
         }`;
 
-    console.log("Backend schedule:", schedule);
-
     return {
         id: schedule._id,
         scheduleId: schedule._id,
