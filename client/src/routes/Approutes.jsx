@@ -18,11 +18,12 @@ import ScheduleList from "../pages/admin/schedules/ScheduleList";
 import ScheduleDetails from "../pages/admin/schedules/ScheduleDetails";
 import CreateSchedule from "../pages/admin/schedules/CreateSchedule";
 import UpdateSchedule from "../pages/admin/schedules/UpdateSchedule";
-import UserList from "../pages/admin/user/UserList";
+import UserList from "../pages/admin/users/UserList";
 import UserLayout from "../components/user/UserLayout";
 import Home from "../pages/user/Home";
 import BusSchedule from "../pages/user/BusSchedule";
 import BusScheduleDetails from "../pages/user/BusScheduleDetails";
+import FareList from "../pages/admin/fares/FareList";
 
 
 const AppRoutes = () => {
@@ -70,6 +71,8 @@ const AppRoutes = () => {
                 <Route path={"schedules/create"} element={<CreateSchedule />} />
 
                 <Route path={"schedules/:id/edit"} element={<UpdateSchedule />} />
+
+                <Route path={"fares"} element={<FareList />} />
 
             </Route>
 
