@@ -230,7 +230,7 @@ const AdminSidebar = ({ sidebarOpen, setSidebarOpen }) => {
                   to="/admin/fares"
                   end
                   className={subMenuClass}
-                  onClick={() => showUnavailable(navigate)}
+                  onClick={handleLinkClick}
                 >
                   Fare List
                 </NavLink>
