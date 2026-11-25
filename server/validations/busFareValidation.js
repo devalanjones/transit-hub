@@ -46,7 +46,7 @@ const idParamSchema = Joi.object({
 });
 
 const updateFareSchema = Joi.object({
-  bustype: Joi.string().trim().optional(),
+  busType: Joi.string().trim().optional(),
   baseFare: Joi.number().min(0).optional(),
   farePerKm: Joi.number().positive().optional(),
 }).min(1);
