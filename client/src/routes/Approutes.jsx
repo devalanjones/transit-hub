@@ -24,6 +24,8 @@ import Home from "../pages/user/Home";
 import BusSchedule from "../pages/user/BusSchedule";
 import BusScheduleDetails from "../pages/user/BusScheduleDetails";
 import FareList from "../pages/admin/fares/FareList";
+import CreateFare from "../pages/admin/fares/CreateFare";
+import UpdateFare from "../pages/admin/fares/UpdateFare";
 
 
 const AppRoutes = () => {
@@ -73,6 +75,10 @@ const AppRoutes = () => {
                 <Route path={"schedules/:id/edit"} element={<UpdateSchedule />} />
 
                 <Route path={"fares"} element={<FareList />} />
+
+                <Route path={"fares/create"} element={<CreateFare />} />
+
+                <Route path={"fares/:id/edit"} element={<UpdateFare />} />
 
             </Route>
 

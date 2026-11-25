@@ -65,6 +65,26 @@ const getFareByIdService = async (id) => {
 };
 
 const updateFareService = async (id, updateData) => {
+
+  if (updateData.busType) {
+    const existingBusType = await BusFare.findOne({
+      busType: {
+        $regex: new RegExp(`^${updateData.busType.trim()}$`, "i"),
+      },
+      _id: { $ne: id },
+    });
+
+    if (existingBusType) {
+      const error = new Error(
+        `Bus type '${updateData.busType}' already exists`
+      );
+      error.statusCode = 409;
+      throw error;
+    }
+
+    updateData.busType = updateData.busType.trim();
+  }
+
   const updatedFare = await BusFare.findByIdAndUpdate(id, updateData, {
     new: true,
     runValidators: true,
